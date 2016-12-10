@@ -1,0 +1,58 @@
+{
+	"Divisions": [
+		"Carry Optics",
+		"Limited",
+		"Limited 10",
+		"Open",
+		"PCC",
+		"Production",
+		"Revolver",
+		"Single Stack"
+	],
+	"Classes": [
+		"G",
+		"M",
+		"A",
+		"B",
+		"C",
+		"D",
+		"U"
+	],
+	"AwardParameters":	{
+		"OverallPlaceLimit": 3,
+		"OverallMin": 5,
+		"ClassPlaceLimit": -1,
+		"ClassMinFirst": 5,
+		"ClassInterval": 3
+	},
+	"ClassesAttributes": {
+		"G": {
+			"Order": 1,
+			"FullName": "Grand Master"
+		},
+		"M": {
+			"Order": 2,
+			"FullName": "Master"
+		},
+		"A": {
+			"Order": 3,
+			"FullName": "A"
+		},
+		"B": {
+			"Order": 4,
+			"FullName": "B"
+		},
+		"C": {
+			"Order": 5,
+			"FullName": "C"
+		},
+		"D": {
+			"Order": 6,
+			"FullName": "D"
+		},
+		"U": {
+			"Order": 7,
+			"FullName": "Unclassified"
+		}
+	}
+}
