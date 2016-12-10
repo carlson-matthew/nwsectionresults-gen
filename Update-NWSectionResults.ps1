@@ -14,6 +14,29 @@ Param
 	[switch]$PassThruFinal
 )
 
+# Creates the specified folder if it does not already exist.
+function Create-Folder
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		[string]$folderPath
+	)
+	
+	if (!(Test-Path $folderPath)) {
+		#Write-Output "Folder path, $folderPath, does not exist. Creating directory..."
+		mkdir $folderPath
+		
+		if (!(Test-Path $folderPath)) {
+			Write-Error "Directory creation failed. Exiting script..."
+			Exit 1
+		} else {
+			#Write-Output "Directory creation succeeded..."
+		}
+	}
+}
+
 function getHTML ($uri, $timeoutNum=5) {
 	$count = 0
 	$success = $false
@@ -916,22 +939,31 @@ function Generate-Html
 
 
 $date = (get-date -f yyyyMMdd-hhmmss)
-$sectionShooterCSV = "C:\Temp\practigrab\sectionShooters.csv"
-$sectionMatchesCSV = "C:\Temp\practigrab\sectionMatches.csv"
+$global:scriptName = "Update-NWSectionResults"
+$global:tempDir = "C:\temp"
+$global:outputDir = "$($global:tempDir)\$($global:scriptName)"
+$global:standingsDir = "$($global:outputDir)\standings"
+$global:workingDir = (Get-Location).Path
+$sectionShooterCSV = "$($global:outputDir)\sectionShooters.csv"
+$sectionMatchesCSV = "$($global:outputDir)\sectionMatches.csv"
 $sectionShooters = Import-CSV $sectionShooterCSV
-$sectionMatches = Import-CSV $sectionMatchesCSV
+#$sectionMatches = Import-CSV $sectionMatchesCSV
 $sectionMatchesConfigJson = Get-Content $SectionMatchesConfigPath | ConvertFrom-Json
-$standingsRawOutputCSV = "C:\temp\practigrab\standings\sectionStandingsRaw-$($date).csv"
-$finalStandingsCSV = "C:\temp\practigrab\standings\finalStandingsRaw-$($date).csv"
-$global:standingByDivisionHtml = "C:\temp\practigrab\standings\standingByDivisionHtml-$($date).html"
-$global:standingByClassHtml = "C:\temp\practigrab\standings\standingByClassHtml-$($date).html"
-$global:awardsHtml = "C:\temp\practigrab\standings\awardsHtml-$($date).html"
-$global:css = ".\nwsectionresults.css"
+$standingsRawOutputCSV = "$($global:standingsDir)\sectionStandingsRaw-$($date).csv"
+$finalStandingsCSV = "$($global:standingsDir)\finalStandingsRaw-$($date).csv"
+$global:standingByDivisionHtml = "$($global:standingsDir)\standingByDivisionHtml-$($date).html"
+$global:standingByClassHtml = "$($global:standingsDir)\standingByClassHtml-$($date).html"
+$global:awardsHtml = "$($global:standingsDir)\awardsHtml-$($date).html"
+$global:css = "$($global:outputDir)\nwsectionresults.css"
 $global:style = Get-Content $global:css
 
-$finalStandingsExcel = "C:\temp\practigrab\standings\finalStandings-$($date).xlsx"
+Create-Folder -folderPath $global:tempDir
+Create-Folder -folderPath $global:outputDir
+Create-Folder -folderPath $global:standingsDir
 
-$uspsaConfigPath = ".\uspsaconfig.json"
+$finalStandingsExcel = "$($global:standingsDir)\finalStandings-$($date).xlsx"
+
+$uspsaConfigPath = "$($global:outputDir)\uspsaconfig.json"
 $global:uspsaConfigJson = Get-Content $uspsaConfigPath | ConvertFrom-Json
 $global:divisions = $global:uspsaConfigJson.Divisions
 $global:classes = $global:uspsaConfigJson.Classes
