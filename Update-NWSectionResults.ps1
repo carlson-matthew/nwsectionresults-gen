@@ -2,10 +2,7 @@
 Param
 (
 	[Parameter(Mandatory=$false)]
-	[string]$SectionMatchesConfigPath="C:\Temp\practigrab\sectionMatches.json",
-	
-	[Parameter(Mandatory=$false)]
-	[string[]]$AdditionalMatchFiles=@("C:\Temp\practigrab\SheltonChampionshipSeries.csv"),
+	[string]$SectionMatchesConfigPath="C:\Temp\Update-NWSectionResults\sectionMatches.json",
 	
 	[Parameter(Mandatory=$false)]
 	[switch]$PassThruRaw,
@@ -94,31 +91,6 @@ function Get-OverallByDivisionPercent
 	)
 	
 	$matchShooters = @()
-	<#
-	foreach ($shooter in $sectionShooters)
-	{
-		$matchShooter = $matchInfo.matchShooters | Where sh_id -eq $shooter.USPSANumber
-		if ($true)
-		{
-			$division = $matchShooter.sh_dvp
-			$class = $matchShooter.sh_grd
-			$shooterUUID = $matchShooter.sh_uuid
-			$divPercent = ($matchInfo.matchResults.match."$division" | Where shooter -eq $shooterUUID ).matchPercent
-			
-			$matchShooters += [pscustomobject]@{
-				USPSANumber = $shooter.USPSANumber.ToUpper()
-				FirstName = $shooter.FirstName
-				LastName = $shooter.LastName
-				MatchName = $matchInfo.matchName
-				Club = $matchInfo.Club
-				Division = $division
-				Class = $class
-				DivisionPercent = $divPercent
-				}
-		}
-	}
-	
-	#>
 	
 	foreach ($shooter in $matchInfo.matchShooters)
 	{
@@ -131,6 +103,11 @@ function Get-OverallByDivisionPercent
 		$divPercent = ($matchInfo.matchResults.match."$division" | Where shooter -eq $shooterUUID ).matchPercent
 		
 		# Exceptions
+		# Force-fix any data issues in input
+		# eg.
+		# - Shooter changes to lifetime or three year membership midseason (might have another fix to this by dropping prefix
+		# - Typos in name or USPSA number
+		# - Discrepencies between division or class names
 		
 		if ($lastName -eq "Hong" -and $firstName -eq "Andrew")
 		{
@@ -162,6 +139,36 @@ function Get-OverallByDivisionPercent
 			$uspsaNumber = "A85741"
 		}
 		
+		if ($lastName -eq "Domingo" -and $firstName -eq "Emilio")
+		{
+			$uspsaNumber = "TY86951"
+		}
+		
+		if ($lastName -eq "Doster" -and $firstName -eq "Stephanie")
+		{
+			$uspsaNumber = "A96362"
+		}
+		
+		if ($lastName -eq "Skubi" -and $firstName -eq "Bart")
+		{
+			$uspsaNumber = "L4061"
+		}
+		
+		if ($lastName -eq "Tomasie" -and $firstName -eq "Squire")
+		{
+			$uspsaNumber = "L1145"
+		}
+		
+		if ($lastName -eq "Blair" -and $firstName -eq "Bruce")
+		{
+			$uspsaNumber = "A47451"
+		}
+		
+		if ($lastName -eq "Dong" -and $firstName -eq "James")
+		{
+			$uspsaNumber = "FY22573"
+		}
+
 		$matchShooters += [pscustomobject]@{
 			USPSANumber = $uspsaNumber.ToUpper()
 			FirstName = $firstName
@@ -231,7 +238,7 @@ function Build-MasterSheet
 		$standingsRaw
 	)
 	
-	$clubs = $standingsRaw | Select Club -Unique | Sort
+	$clubs = $standingsRaw | Select Club,ClubOrdered -Unique | Sort ClubOrdered
 	
 	$sectionShooterResult = [pscustomobject]@{
 			USPSANumber = ""
@@ -241,6 +248,7 @@ function Build-MasterSheet
 			Class = ""
 			SectionScore = ""
 			ScoresUsed = ""
+			SectionMember = $false
 			OverallAward = ""
 			ClassAward = ""
 			}
@@ -261,6 +269,9 @@ function Process-Standings
 	(
 		[Parameter(Mandatory=$true)]
 		$standingsRaw,
+		
+		[Parameter(Mandatory=$false)]
+		$sectionShooters,
 		
 		[Parameter(Mandatory=$false)]
 		[int]$BestXOf=3
@@ -304,12 +315,19 @@ function Process-Standings
 				$shooterStanding."$($shooterResult.Club)" = $shooterResult.DivisionPercent
 			}
 			
-			$shooterStanding.USPSANumber = $uspsaNumber
+			$shooterStanding.USPSANumber = $uspsaNumber.Replace("-","")
 			$shooterStanding.FirstName = $shooterResults[0].FirstName
 			$shooterStanding.LastName = $shooterResults[0].LastName
 			$shooterStanding.Division = $division
 			$shooterStanding.Class = $shooterResults[0].Class
 			$shooterStanding.SectionScore = $average
+			
+			# Check to see if the shooter is in the section. Remove '-' to standardize.
+			# TODO: Sanitize USPSA number to ignore membershp type prefix. Number seem to never change between TY, A, F, etc. Could use this as a truly unique value.
+			if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
+			{
+				$shooterStanding.SectionMember = $true
+			}
 			
 			
 			$finalStandings += $shooterStanding
@@ -1021,27 +1039,11 @@ foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
 	}
 	
 }
-<#
-foreach ($sectionMatch in $sectionMatches)
-{
-	Write-Host "Getting overall results by division for club, $($sectionMatch.Club)"
-	$standingsRaw += Get-StandingsRaw -sectionShooters $sectionShooters -sectionMatch $sectionMatch -excelPath $finalStandingsExcel
-}
-
-foreach ($AdditionalMatch in $AdditionalMatchFiles)
-{
-	Write-Host "Getting overall results by division for additional file, $AdditionalMatch"
-	$additionalMatchCSV = Import-CSV $AdditionalMatch
-	$additionalMatchCSV | Export-Excel $finalStandingsExcel -WorkSheetname $additionalMatchCSV[1].Club -FreezeTopRow -AutoSize
-	#$additionalMatchCSV | export-csv C:\temp\practigrab\testme.csv
-	$standingsRaw += $additionalMatchCSV
-}#>
-
 
 $standingsRaw | Export-CSV $standingsRawOutputCsvPath -NoTypeInformation
 $standingsRaw | Export-Excel $finalStandingsExcel -WorkSheetname RawStandings -FreezeTopRow -AutoSize
 
-$finalStandings = Process-Standings -standingsRaw $standingsRaw
+$finalStandings = Process-Standings -standingsRaw $standingsRaw -sectionShooters $sectionShooters
 
 
 
