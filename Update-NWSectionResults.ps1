@@ -538,6 +538,7 @@ function Calculate-SectionStats
 			Class = "Overall"
 			TotalUniqueShooters = @($rawStandings | Where {($_.Division -eq $division) -and ($_.USPSANumber -ne "") -and ($_.USPSANumber -ne "PEN")} | Select USPSANumber -Unique).Count
 			TotalEligibleShooters = @($finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0)}).Count
+			TotalEligibleSectionShooters = @($finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.SectionMember)}).Count
 		}
 		$sectionStats += $sectionShooterResult
 		
@@ -554,11 +555,16 @@ function Calculate-SectionStats
 			$eligibleShooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.Class -eq $class)} | Sort SectionScore -Descending
 			$numEligibleShooters = $eligibleShooters.Length
 			
+			$eligibleShootersSection = @()
+			$eligibleShootersSection += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.Class -eq $class) -and ($_.SectionMember)} | Sort SectionScore -Descending
+			$numEligibleShootersSection = $eligibleShootersSection.Length
+			
 			$sectionShooterResult = [pscustomobject]@{
 				Division = $division
 				Class = $fullName
 				TotalUniqueShooters = $numUniqueShooters
 				TotalEligibleShooters = $numEligibleShooters
+				TotalEligibleSectionShooters = $numEligibleShootersSection
 			}
 			
 			$sectionStats += $sectionShooterResult
@@ -586,13 +592,13 @@ function Calculate-OverallAwards
 	{
 		#Write-Host "Division: $division"
 		$numberUniqueShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq "Overall")}).TotalUniqueShooters
-		$numberEligibleShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq "Overall")}).TotalEligibleShooters
+		$numberEligibleShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq "Overall")}).TotalEligibleSectionShooters
 		
 		if ($numberUniqueShooters -ge $global:overallMin)
 		{
 			#Write-Host "The number of shooters in this division ($($numberUniqueShooters)) met the minimum required shoooters ($($global:overallMin))."
 			$shooters = @()
-			$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0)} | Sort SectionScore -Descending
+			$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.SectionMember)} | Sort SectionScore -Descending
 			if ($shooters -ne $null)
 			{
 				$numShooters = $shooters.Length
@@ -648,7 +654,7 @@ function Calculate-ClassAwards
 			#Write-Host "Class: $classFullName"
 			
 			$numberUniqueShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).TotalUniqueShooters
-			$numberEligibleShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).TotalEligibleShooters
+			$numberEligibleShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).TotalEligibleSectionShooters
 
 			
 			if ($numberUniqueShooters -ge $global:classMinFirst)
@@ -669,7 +675,7 @@ function Calculate-ClassAwards
 				}
 				
 				$shooters = @()
-				$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName) -and ($_.SectionScore -gt 0) -and ($_.OverallAward -eq "")} | Sort SectionScore -Descending
+				$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName) -and ($_.SectionScore -gt 0) -and ($_.OverallAward -eq "") -and ($_.SectionMember)} | Sort SectionScore -Descending
 				
 				if ($placeLimit -gt $shooters.Count)
 				{
@@ -1069,5 +1075,5 @@ if ($PassThruFinal)
 {
 	$finalStandings
 }
-$sectionStats
+$sectionStats | ft
 
