@@ -168,6 +168,16 @@ function Get-OverallByDivisionPercent
 		{
 			$uspsaNumber = "FY22573"
 		}
+		
+		$sectionMember = $false
+		$sectionStatus = "Non-member"
+		# Check to see if the shooter is in the section. Remove '-' to standardize.
+		# TODO: Sanitize USPSA number to ignore membershp type prefix. Number seem to never change between TY, A, F, etc. Could use this as a truly unique value.
+		if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
+		{
+			$sectionMember = $true
+			$sectionStatus = "Member"
+		}
 
 		$matchShooters += [pscustomobject]@{
 			USPSANumber = $uspsaNumber.ToUpper()
@@ -179,6 +189,8 @@ function Get-OverallByDivisionPercent
 			Division = $division
 			Class = $class
 			DivisionPercent = [single]$divPercent
+			SectionMember = $sectionMember
+			SectionStatus = $sectionStatus
 			}
 	}
 	
@@ -249,6 +261,7 @@ function Build-MasterSheet
 			SectionScore = ""
 			ScoresUsed = ""
 			SectionMember = $false
+			SectionStatus = "Non-Member"
 			OverallAward = ""
 			ClassAward = ""
 			}
@@ -327,6 +340,7 @@ function Process-Standings
 			if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
 			{
 				$shooterStanding.SectionMember = $true
+				$shooterStanding.SectionStatus = "Member"
 			}
 			
 			
@@ -346,26 +360,25 @@ function Calculate-OverallByDivisionPercent
 		$finalStandings
 	)
 	
-	Generate-Html -elementType "bodystart" -htmlOutputPath $global:standingByDivisionHtmlPath
-	Generate-Html -elementType "divHeader" -htmlOutputPath $global:standingByDivisionHtmlPath -innerHtml "Overall Results By Division"
-	Generate-Html -elementType "divDescription" -htmlOutputPath $global:standingByDivisionHtmlPath -innerHtml "* indicates the shooter qualified for a division or class award. Refer to the awards section for details."
-	#Generate-Html -elementType "divDescription" -htmlOutputPath $global:standingByDivisionHtmlPath -innerHtml "Overall Results By Division"
+	Generate-Html -elementType "bodystart" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
+	Generate-Html -elementType "divHeader" -htmlOutputPath $global:standingByDivisionHtmlOutputPath -innerHtml "Overall Results By Division"
+	Generate-Html -elementType "divDescription" -htmlOutputPath $global:standingByDivisionHtmlOutputPath -innerHtml "* indicates the shooter qualified for a division or class award. Refer to the awards section for details."
+	#Generate-Html -elementType "divDescription" -htmlOutputPath $global:standingByDivisionHtmlOutputPath -innerHtml "Overall Results By Division"
 	
 	foreach ($division in $global:divisions)
 	{
-		Write-Host $division
-		Generate-Html -elementType "divDivision" -htmlOutputPath $global:standingByDivisionHtmlPath
-		Generate-Html -elementType "divDivisionHeader" -htmlOutputPath $global:standingByDivisionHtmlPath -innerHtml $division
-		Generate-Html -elementType "divDivisionBody" -htmlOutputPath $global:standingByDivisionHtmlPath
-		Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByDivisionHtmlPath
+		Write-Debug $division
+		Generate-Html -elementType "divDivision" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
+		Generate-Html -elementType "divDivisionHeader" -htmlOutputPath $global:standingByDivisionHtmlOutputPath -innerHtml $division
+		Generate-Html -elementType "divDivisionBody" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
+		Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
 		
 		$shooters = @()
 		$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0)} | Sort SectionScore -Descending
 		if ($shooters -ne $null)
 		{
 			$numEligibleShooters = $shooters.Length
-			#Write-Host "$numEligibleShooters eligible shooters"
-			Write-Host
+			#Write-Debug "$numEligibleShooters eligible shooters"
 			
 			
 			
@@ -393,28 +406,28 @@ function Calculate-OverallByDivisionPercent
 				
 				$placeFull = Get-PlaceFull -place ([string]($place))
 				$shooterOutput = "$placeFull Place - $firstName $lastName ($uspsaNumber) - $sectionScore%$($awardNotation)"
-				Write-Host $shooterOutput
-				Generate-Html -elementType "html" -htmlOutputPath $global:standingByDivisionHtmlPath -innerHtml $shooterOutput
-				Generate-Html -elementType "br" -htmlOutputPath $global:standingByDivisionHtmlPath
+				Write-Debug $shooterOutput
+				Generate-Html -elementType "html" -htmlOutputPath $global:standingByDivisionHtmlOutputPath -innerHtml $shooterOutput
+				Generate-Html -elementType "br" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
 				$place++
 			}
 			
 		}
 		else
 		{
-			Write-Host "No eligible shooters."
-			Generate-Html -elementType "html" -htmlOutputPath $global:standingByDivisionHtmlPath -innerHtml "No eligible shooters."
-			Generate-Html -elementType "br" -htmlOutputPath $global:standingByDivisionHtmlPath
+			Write-Debug "No eligible shooters."
+			Generate-Html -elementType "html" -htmlOutputPath $global:standingByDivisionHtmlOutputPath -innerHtml "No eligible shooters."
+			Generate-Html -elementType "br" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
 		}
 		
-		Write-Host
-		Generate-Html -elementType "pEnd" -htmlOutputPath $global:standingByDivisionHtmlPath
-		Generate-Html -elementType "br" -htmlOutputPath $global:standingByDivisionHtmlPath
-		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByDivisionHtmlPath
-		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByDivisionHtmlPath
+		
+		Generate-Html -elementType "pEnd" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
+		Generate-Html -elementType "br" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
+		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
+		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
 	}
 	
-	Generate-Html -elementType "bodyEnd" -htmlOutputPath $global:standingByDivisionHtmlPath
+	Generate-Html -elementType "bodyEnd" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
 }
 
 function Calculate-ClassByDivisionPercent
@@ -426,29 +439,29 @@ function Calculate-ClassByDivisionPercent
 		$finalStandings
 	)
 	
-	Generate-Html -elementType "bodystart" -htmlOutputPath $global:standingByClassHtmlPath
-	Generate-Html -elementType "divHeader" -htmlOutputPath $global:standingByClassHtmlPath -innerHtml "Class Results By Division"
-	Generate-Html -elementType "divDescription" -htmlOutputPath $global:standingByClassHtmlPath -innerHtml "* indicates the shooter qualified for a division or class award. Refer to the awards section for details."
+	Generate-Html -elementType "bodystart" -htmlOutputPath $global:standingByClassHtmlOutputPath
+	Generate-Html -elementType "divHeader" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml "Class Results By Division"
+	Generate-Html -elementType "divDescription" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml "* indicates the shooter qualified for a division or class award. Refer to the awards section for details."
 	
 	foreach ($division in $global:divisions)
 	{
-		Write-Host $division
-		Write-Host
+		Write-Debug $division
 		
-		Generate-Html -elementType "divDivision" -htmlOutputPath $global:standingByClassHtmlPath
-		Generate-Html -elementType "divDivisionHeader" -htmlOutputPath $global:standingByClassHtmlPath -innerHtml $division
-		Generate-Html -elementType "divDivisionBody" -htmlOutputPath $global:standingByClassHtmlPath
-		Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByClassHtmlPath
+		
+		Generate-Html -elementType "divDivision" -htmlOutputPath $global:standingByClassHtmlOutputPath
+		Generate-Html -elementType "divDivisionHeader" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml $division
+		Generate-Html -elementType "divDivisionBody" -htmlOutputPath $global:standingByClassHtmlOutputPath
+		Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByClassHtmlOutputPath
 		
 		foreach ($class in $global:classes)
 		{
 			$fullName = $global:uspsaConfigJson.ClassesAttributes.$class.FullName
-			Write-Host $fullName
+			Write-Debug $fullName
 			
-			Generate-Html -elementType "divClass" -htmlOutputPath $global:standingByClassHtmlPath
-			Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:standingByClassHtmlPath -innerHtml $fullName
-			Generate-Html -elementType "divClassBody" -htmlOutputPath $global:standingByClassHtmlPath
-			Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByClassHtmlPath
+			Generate-Html -elementType "divClass" -htmlOutputPath $global:standingByClassHtmlOutputPath
+			Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml $fullName
+			Generate-Html -elementType "divClassBody" -htmlOutputPath $global:standingByClassHtmlOutputPath
+			Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByClassHtmlOutputPath
 			
 			
 			$uniqueShooters = @()
@@ -460,8 +473,8 @@ function Calculate-ClassByDivisionPercent
 			if ($eligibleShooters -ne $null)
 			{
 				$numEligibleShooters = $eligibleShooters.Length
-				Write-Host "$numEligibleShooters eligible shooters"
-				Write-Host
+				Write-Debug "$numEligibleShooters eligible shooters"
+				
 				
 				$place = 1
 				foreach ($eligibleShooter in $eligibleShooters)
@@ -487,32 +500,32 @@ function Calculate-ClassByDivisionPercent
 					
 					$placeFull = Get-PlaceFull -place ([string]($place))
 					$shooterOutput = "$placeFull Place - $firstName $lastName ($uspsaNumber) - $sectionScore%$($awardNotation)"
-					Write-Host $shooterOutput
-					Generate-Html -elementType "html" -htmlOutputPath $global:standingByClassHtmlPath -innerHtml $shooterOutput
-					Generate-Html -elementType "br" -htmlOutputPath $global:standingByClassHtmlPath
+					Write-Debug $shooterOutput
+					Generate-Html -elementType "html" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml $shooterOutput
+					Generate-Html -elementType "br" -htmlOutputPath $global:standingByClassHtmlOutputPath
 					$place++
 				}
 			}
 			else
 			{
-				Write-Host "No eligible shooters."
-				Generate-Html -elementType "html" -htmlOutputPath $global:standingByClassHtmlPath -innerHtml "No eligible shooters."
-				Generate-Html -elementType "br" -htmlOutputPath $global:standingByClassHtmlPath
+				Write-Debug "No eligible shooters."
+				Generate-Html -elementType "html" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml "No eligible shooters."
+				Generate-Html -elementType "br" -htmlOutputPath $global:standingByClassHtmlOutputPath
 			}
 			
-			Write-Host
-			Generate-Html -elementType "pEnd" -htmlOutputPath $global:standingByClassHtmlPath
-			Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlPath
-			Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlPath
+			
+			Generate-Html -elementType "pEnd" -htmlOutputPath $global:standingByClassHtmlOutputPath
+			Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlOutputPath
+			Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlOutputPath
 		}
 		
-		Generate-Html -elementType "pEnd" -htmlOutputPath $global:standingByClassHtmlPath
-		Generate-Html -elementType "br" -htmlOutputPath $global:standingByClassHtmlPath
-		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlPath
-		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlPath
+		Generate-Html -elementType "pEnd" -htmlOutputPath $global:standingByClassHtmlOutputPath
+		Generate-Html -elementType "br" -htmlOutputPath $global:standingByClassHtmlOutputPath
+		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlOutputPath
+		Generate-Html -elementType "divEnd" -htmlOutputPath $global:standingByClassHtmlOutputPath
 	}
 	
-	Generate-Html -elementType "bodyEnd" -htmlOutputPath $global:standingByClassHtmlPath
+	Generate-Html -elementType "bodyEnd" -htmlOutputPath $global:standingByClassHtmlOutputPath
 }
 
 function Calculate-SectionStats
@@ -531,7 +544,7 @@ function Calculate-SectionStats
 	
 	foreach ($division in $global:divisions)
 	{		
-		#Write-Host $division
+		#Write-Debug $division
 		
 		$sectionShooterResult = [pscustomobject]@{
 			Division = $division
@@ -545,7 +558,7 @@ function Calculate-SectionStats
 		foreach ($class in $global:classes)
 		{
 			$fullName = $global:uspsaConfigJson.ClassesAttributes.$class.FullName
-			#Write-Host $fullName
+			#Write-Debug $fullName
 			
 			$uniqueShooters = @()
 			$uniqueShooters += $rawStandings | Where {($_.Division -eq $division) -and ($_.USPSANumber -ne "") -and ($_.USPSANumber -ne "PEN") -and ($_.Class -eq $class)} | Select USPSANumber -Unique
@@ -587,16 +600,16 @@ function Calculate-OverallAwards
 		$sectionStats
 	)
 	
-	#Write-Host "Overall Awards Calc"
+	#Write-Debug "Overall Awards Calc"
 	foreach ($division in $global:divisions)
 	{
-		#Write-Host "Division: $division"
+		#Write-Debug "Division: $division"
 		$numberUniqueShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq "Overall")}).TotalUniqueShooters
 		$numberEligibleShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq "Overall")}).TotalEligibleSectionShooters
 		
 		if ($numberUniqueShooters -ge $global:overallMin)
 		{
-			#Write-Host "The number of shooters in this division ($($numberUniqueShooters)) met the minimum required shoooters ($($global:overallMin))."
+			#Write-Debug "The number of shooters in this division ($($numberUniqueShooters)) met the minimum required shoooters ($($global:overallMin))."
 			$shooters = @()
 			$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.SectionMember)} | Sort SectionScore -Descending
 			if ($shooters -ne $null)
@@ -610,14 +623,14 @@ function Calculate-OverallAwards
 					$placeLimit = $numberEligibleShooters
 				}
 				
-				#Write-Host "numShooters: $numShooters"
-				#Write-Host "PlaceLimit: $placeLimit"
+				#Write-Debug "numShooters: $numShooters"
+				#Write-Debug "PlaceLimit: $placeLimit"
 				
 				for ($i = 0; $i -lt $placeLimit; $i++)
 				{
-					#Write-Host "Working on place $($i + 1) of $placeLimit"
+					#Write-Debug "Working on place $($i + 1) of $placeLimit"
 					$uspsaNumber = $shooters[$i].USPSANumber
-					#Write-Host "placed $uspsaNumber"
+					#Write-Debug "placed $uspsaNumber"
 					$place = Get-PlaceFull -place ([string]($i+1))
 					($finalStandings | Where {($_.USPSANumber -eq $uspsaNumber) -and $_.Division -eq $division}).OverallAward = "$place Place $division Overall"
 				}
@@ -625,7 +638,7 @@ function Calculate-OverallAwards
 		}
 		else
 		{
-			#Write-Host "The number of shooters in this division ($($numberUniqueShooters)) did not meet the minimum required shoooters ($($global:overallMin))."
+			#Write-Debug "The number of shooters in this division ($($numberUniqueShooters)) did not meet the minimum required shoooters ($($global:overallMin))."
 		}
 	}
 	
@@ -643,15 +656,15 @@ function Calculate-ClassAwards
 		$sectionStats
 	)
 	
-	#Write-Host "Class Awards Calc"
+	#Write-Debug "Class Awards Calc"
 	foreach ($division in $global:divisions)
 	{
-		#Write-Host "Division: $division"
+		#Write-Debug "Division: $division"
 		
 		foreach ($class in $global:classes)
 		{
 			$classFullName = $global:uspsaConfigJson.ClassesAttributes.$class.FullName
-			#Write-Host "Class: $classFullName"
+			#Write-Debug "Class: $classFullName"
 			
 			$numberUniqueShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).TotalUniqueShooters
 			$numberEligibleShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).TotalEligibleSectionShooters
@@ -659,7 +672,7 @@ function Calculate-ClassAwards
 			
 			if ($numberUniqueShooters -ge $global:classMinFirst)
 			{
-				#Write-Host "The number of shooters in this division ($($numberUniqueShooters)) met the minimum required shoooters ($($global:classMinFirst))."
+				#Write-Debug "The number of shooters in this division ($($numberUniqueShooters)) met the minimum required shoooters ($($global:classMinFirst))."
 				
 				# Determine the number of places with the following formula. First place awarded after minimum 5 shooters.
 				# 1 place for every 3 shooters after that till we reach the maximum number of places. This max is configurable.
@@ -686,14 +699,14 @@ function Calculate-ClassAwards
 				{
 					$numShooters = $shooters.Length
 					
-					#Write-Host "numShooters: $numShooters"
-					#Write-Host "PlaceLimit: $placeLimit"
+					#Write-Debug "numShooters: $numShooters"
+					#Write-Debug "PlaceLimit: $placeLimit"
 					
 					for ($i = 0; $i -lt $placeLimit; $i++)
 					{
-						#Write-Host "Working on place $($i + 1) of $placeLimit"
+						#Write-Debug "Working on place $($i + 1) of $placeLimit"
 						$uspsaNumber = $shooters[$i].USPSANumber
-						#Write-Host "placed $uspsaNumber"
+						#Write-Debug "placed $uspsaNumber"
 						$place = Get-PlaceFull -place ([string]($i+1))
 						($finalStandings | Where {($_.USPSANumber -eq $uspsaNumber) -and ($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).ClassAward = "$place Place $division $classFullName"
 					}
@@ -701,7 +714,7 @@ function Calculate-ClassAwards
 			}
 			else
 			{
-				#Write-Host "The number of shooters in this division and class ($($numberUniqueShooters)) did not meet the minimum required shoooters ($($global:classMinFirst))."
+				#Write-Debug "The number of shooters in this division and class ($($numberUniqueShooters)) did not meet the minimum required shoooters ($($global:classMinFirst))."
 			}
 		}
 	}
@@ -720,32 +733,32 @@ function Write-OverallAwards
 		$sectionStats
 	)
 	
-	Generate-Html -elementType "bodystart" -htmlOutputPath $global:awardsHtmlPath
-	Generate-Html -elementType "divHeader" -htmlOutputPath $global:awardsHtmlPath -innerHtml "Awards Qualification"
-	Generate-Html -elementType "divDescription" -htmlOutputPath $global:awardsHtmlPath -innerHtml $global:awardsDescription
+	Generate-Html -elementType "bodystart" -htmlOutputPath $global:awardsHtmlOutputPath
+	Generate-Html -elementType "divHeader" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml "Awards Qualification"
+	Generate-Html -elementType "divDescription" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml $global:awardsDescription
 	
 	foreach ($division in $global:divisions)
 	{
-		Generate-Html -elementType "divDivision" -htmlOutputPath $global:awardsHtmlPath
-		Generate-Html -elementType "divDivisionHeader" -htmlOutputPath $global:awardsHtmlPath -innerHtml $division
-		Generate-Html -elementType "divDivisionBody" -htmlOutputPath $global:awardsHtmlPath
-		Generate-Html -elementType "pStart" -htmlOutputPath $global:awardsHtmlPath
+		Generate-Html -elementType "divDivision" -htmlOutputPath $global:awardsHtmlOutputPath
+		Generate-Html -elementType "divDivisionHeader" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml $division
+		Generate-Html -elementType "divDivisionBody" -htmlOutputPath $global:awardsHtmlOutputPath
+		Generate-Html -elementType "pStart" -htmlOutputPath $global:awardsHtmlOutputPath
 			
 		$overallShooters = @($finalStandings | Where {($_.Division -eq $division) -and ($_.OverallAward -ne "")} | Sort OverallAward)
 		
 		if ($overallShooters -ne $null)
 		{
-			Write-Host $division
+			Write-Debug $division
 			
 			
-			Write-Host
-			Write-Host "Overall"
+			
+			Write-Debug "Overall"
 			
 			$uniqueShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq "Overall")}).TotalUniqueShooters
-			Generate-Html -elementType "divClass" -htmlOutputPath $global:awardsHtmlPath
-			Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:awardsHtmlPath -innerHtml "Overall <span class=`"classUniqueShooters`">($uniqueShooters unique shooters)</span>"
-			Generate-Html -elementType "divClassBody" -htmlOutputPath $global:awardsHtmlPath
-			Generate-Html -elementType "pStart" -htmlOutputPath $global:awardsHtmlPath
+			Generate-Html -elementType "divClass" -htmlOutputPath $global:awardsHtmlOutputPath
+			Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml "Overall <span class=`"classUniqueShooters`">($uniqueShooters unique shooters)</span>"
+			Generate-Html -elementType "divClassBody" -htmlOutputPath $global:awardsHtmlOutputPath
+			Generate-Html -elementType "pStart" -htmlOutputPath $global:awardsHtmlOutputPath
 			
 		
 			$place = 1
@@ -757,15 +770,15 @@ function Write-OverallAwards
 				$sectionScore = $overallShooter.SectionScore
 				$placeFull = Get-PlaceFull -place ([string]$place)
 				$shooterOutput = "$placeFull - $firstName $lastName ($uspsaNumber) - $sectionScore%"
-				Write-Host $shooterOutput
-				Generate-Html -elementType "html" -htmlOutputPath $global:awardsHtmlPath -innerHtml $shooterOutput
-				Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlPath
+				Write-Debug $shooterOutput
+				Generate-Html -elementType "html" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml $shooterOutput
+				Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlOutputPath
 				$place++
 			}
-			Write-Host
-			Generate-Html -elementType "pEnd" -htmlOutputPath $global:awardsHtmlPath
-			Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlPath
-			Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlPath
+			
+			Generate-Html -elementType "pEnd" -htmlOutputPath $global:awardsHtmlOutputPath
+			Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlOutputPath
+			Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlOutputPath
 			
 			foreach ($class in $global:classes)
 			{
@@ -776,13 +789,13 @@ function Write-OverallAwards
 				if ($classShooters  -ne $null)
 				{
 					$fullName = $global:uspsaConfigJson.ClassesAttributes.$class.FullName
-					Write-Host $fullName
+					Write-Debug $fullName
 					
 					$uniqueShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $fullName)}).TotalUniqueShooters
-					Generate-Html -elementType "divClass" -htmlOutputPath $global:awardsHtmlPath
-					Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:awardsHtmlPath -innerHtml "$fullName <span class=`"classUniqueShooters`">($uniqueShooters unique shooters)</span>"
-					Generate-Html -elementType "divClassBody" -htmlOutputPath $global:awardsHtmlPath
-					Generate-Html -elementType "pStart" -htmlOutputPath $global:awardsHtmlPath
+					Generate-Html -elementType "divClass" -htmlOutputPath $global:awardsHtmlOutputPath
+					Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml "$fullName <span class=`"classUniqueShooters`">($uniqueShooters unique shooters)</span>"
+					Generate-Html -elementType "divClassBody" -htmlOutputPath $global:awardsHtmlOutputPath
+					Generate-Html -elementType "pStart" -htmlOutputPath $global:awardsHtmlOutputPath
 				
 					$place = 1
 					foreach ($classShooter in $classShooters)
@@ -793,39 +806,39 @@ function Write-OverallAwards
 						$sectionScore = $classShooter.SectionScore
 						$placeFull = Get-PlaceFull -place ([string]$place)
 						$shooterOutput = "$placeFull - $firstName $lastName ($uspsaNumber) - $sectionScore%"
-						Write-Host $shooterOutput
-						Generate-Html -elementType "html" -htmlOutputPath $global:awardsHtmlPath -innerHtml $shooterOutput
-						Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlPath
+						Write-Debug $shooterOutput
+						Generate-Html -elementType "html" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml $shooterOutput
+						Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlOutputPath
 						$place++
 					}
-					Write-Host
-					Generate-Html -elementType "pEnd" -htmlOutputPath $global:awardsHtmlPath
-					Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlPath
-					Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlPath
+					
+					Generate-Html -elementType "pEnd" -htmlOutputPath $global:awardsHtmlOutputPath
+					Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlOutputPath
+					Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlOutputPath
 				}
 				else
 				{
-					#Write-Host "Not enough shooters for this class award."
+					#Write-Debug "Not enough shooters for this class award."
 				}
 				
-				#Write-Host
+				#Write-Debug
 			}
 		}
 		else
 		{
-			Write-Host "Not enough shooters for division or class awards."
-			Write-Host
-			Generate-Html -elementType "html" -htmlOutputPath $global:awardsHtmlPath -innerHtml "Not enough shooters for division or class awards."
-			Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlPath
+			Write-Debug "Not enough shooters for division or class awards."
+			
+			Generate-Html -elementType "html" -htmlOutputPath $global:awardsHtmlOutputPath -innerHtml "Not enough shooters for division or class awards."
+			Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlOutputPath
 		}
 		
-		Generate-Html -elementType "pEnd" -htmlOutputPath $global:awardsHtmlPath
-		Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlPath
-		Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlPath
-		Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlPath
+		Generate-Html -elementType "pEnd" -htmlOutputPath $global:awardsHtmlOutputPath
+		Generate-Html -elementType "br" -htmlOutputPath $global:awardsHtmlOutputPath
+		Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlOutputPath
+		Generate-Html -elementType "divEnd" -htmlOutputPath $global:awardsHtmlOutputPath
 	}
 	
-	Generate-Html -elementType "bodyEnd" -htmlOutputPath $global:awardsHtmlPath
+	Generate-Html -elementType "bodyEnd" -htmlOutputPath $global:awardsHtmlOutputPath
 }
 
 function Get-PlaceFull
@@ -961,6 +974,58 @@ function Generate-Html
 	$html | Out-File -FilePath $htmlOutputPath -Append
 }
 
+function Generate-MatchListHtml
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		$sectionMatchesConfigJson
+	)
+	
+	$matchInfoList = @()
+
+	foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
+	{
+
+		$matchInfo = [pscustomobject]@{
+				"Match #" = $sectionMatch.MatchNumber
+				Club = $sectionMatch.Club
+				Date = $sectionMatch.MatchDate
+				"PractiScore Link" = "practiLink-$($sectionMatch.MatchNumber)"
+				"USPSA Link" = "uspsaLink-$($sectionMatch.MatchNumber)"
+			}
+			
+		$matchInfoList += $matchInfo
+	}
+
+	$matchInfoHtml = $matchInfoList | ConvertTo-HTML -Fragment
+	#$matchInfoList
+	
+	foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
+	{
+		if ($sectionMatch.PractiScoreURL)
+		{
+			$matchInfoHtml = $matchInfoHtml -replace "practiLink-$($sectionMatch.MatchNumber)", "<a href=`"$($sectionMatch.PractiScoreURL)`">Link</a>"
+		}
+		else
+		{
+			$matchInfoHtml = $matchInfoHtml -replace "practiLink-$($sectionMatch.MatchNumber)", "NA"
+		}
+		
+		if ($sectionMatch.UspsaURL)
+		{
+			$matchInfoHtml = $matchInfoHtml -replace "uspsaLink-$($sectionMatch.MatchNumber)", "<a href=`"$($sectionMatch.UspsaURL)`">Link</a>"
+		}
+		else
+		{
+			$matchInfoHtml = $matchInfoHtml -replace "uspsaLink-$($sectionMatch.MatchNumber)", "NA"
+		}
+	}
+	
+	return $matchInfoHtml
+}
+
 
 $date = (get-date -f yyyyMMdd-hhmmss)
 $global:scriptName = "Update-NWSectionResults"
@@ -973,11 +1038,21 @@ $sectionShooters = Import-CSV $sectionShooterCsvPath
 $sectionMatchesConfigJson = Get-Content $SectionMatchesConfigPath | ConvertFrom-Json
 $standingsRawOutputCsvPath = "$($global:standingsDir)\sectionStandingsRaw-$($date).csv"
 $finalStandingsCsvPath = "$($global:standingsDir)\finalStandingsRaw-$($date).csv"
-$global:standingByDivisionHtmlPath = "$($global:standingsDir)\standingByDivisionHtml-$($date).html"
-$global:standingByClassHtmlPath = "$($global:standingsDir)\standingByClassHtml-$($date).html"
-$global:awardsHtmlPath = "$($global:standingsDir)\awardsHtml-$($date).html"
+$global:standingByDivisionHtmlOutputPath = "$($global:standingsDir)\standingByDivisionHtml-$($date).html"
+$global:standingByClassHtmlOutputPath = "$($global:standingsDir)\standingByClassHtml-$($date).html"
+$global:awardsHtmlOutputPath = "$($global:standingsDir)\awardsHtml-$($date).html"
 $global:cssPath = "$($global:outputDir)\nwsectionresults.css"
 $global:style = Get-Content $global:cssPath
+
+# Public HTML URLs
+$htmlLocalRepoDir = "C:\Users\macarlso\Source\Repos\nwsectionresults"
+$indexHtmlSourcePath = "$($htmlLocalRepoDir)\index-source.html"
+$indexHtmlNewPath = "$($htmlLocalRepoDir)\index.html"
+$shooterStatHtmlSourcePath = "$($htmlLocalRepoDir)\shooter-breakdown-source.html"
+$shooterStatHtmlNewPath = "$($htmlLocalRepoDir)\shooter-breakdown.html"
+$awardsHtmlPath = "$($htmlLocalRepoDir)\awards.html"
+$standingByDivisionHtmlPath = "$($htmlLocalRepoDir)\standingByDivision.html"
+$standingByClassHtmlPath = "$($htmlLocalRepoDir)\standingByClass.html"
 
 Create-Folder -folderPath $global:tempDir
 Create-Folder -folderPath $global:outputDir
@@ -1005,10 +1080,10 @@ else
 	$classLimitText = ", up to $($global:classPlaceLimit) places"
 }
 
-
-
 $global:awardsDescription = @"
 Awards are calculated in the following format:</br>
+</br>
+<b>Who's Eligible?</b> Northwest Section Members</br>
 </br>
 <b>Division:</b></br>
 Top 1-$($global:overallPlaceLimit) shooters ($($global:overallMin) shooter minimum)</br>
@@ -1034,6 +1109,17 @@ foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
 		foreach ($shooter in $additionalMatchCSV)
 		{
 			$shooter | Add-Member -MemberType NoteProperty -Name ClubOrdered -Value "$($sectionMatch.MatchNumber) - $($sectionMatch.Club)"
+			$sectionMember = $false
+			$sectionStatus = "Non-Member"
+			# Check to see if the shooter is in the section. Remove '-' to standardize.
+			# TODO: Sanitize USPSA number to ignore membershp type prefix. Number seem to never change between TY, A, F, etc. Could use this as a truly unique value.
+			if ($shooter.USPSANumber -in $sectionShooters.USPSANumber.Replace("-",""))
+			{
+				$sectionMember = $true
+				$sectionStatus = "Member"
+			}
+			$shooter | Add-Member -MemberType NoteProperty -Name SectionMember -Value $sectionMember
+			$shooter | Add-Member -MemberType NoteProperty -Name SectionStatus -Value $sectionStatus
 		}
 		$additionalMatchCSV | Export-Excel $finalStandingsExcel -WorkSheetname $additionalMatchCSV[1].Club -FreezeTopRow -AutoSize
 		#$additionalMatchCSV | export-csv C:\temp\practigrab\testme.csv
@@ -1046,25 +1132,52 @@ foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
 	
 }
 
+Write-Host "Writing raw standings to file."
 $standingsRaw | Export-CSV $standingsRawOutputCsvPath -NoTypeInformation
 $standingsRaw | Export-Excel $finalStandingsExcel -WorkSheetname RawStandings -FreezeTopRow -AutoSize
 
+Write-Host "Processing final standings."
 $finalStandings = Process-Standings -standingsRaw $standingsRaw -sectionShooters $sectionShooters
 
-
-
+Write-Host "Calculating section stats."
 $sectionStats = Calculate-SectionStats -finalStandings $finalStandings -rawStandings $standingsRaw
 
+Write-Host "Calculating overall awards."
 Calculate-OverallAwards -finalStandings $finalStandings -sectionStats $sectionStats
+
+Write-Host "Calculating class awards."
 Calculate-ClassAwards -finalStandings $finalStandings -sectionStats $sectionStats
+
+Write-Host "Calculating division standings awards."
 Calculate-OverallByDivisionPercent -finalStandings $finalStandings
+
+Write-Host "Calculating class standings."
 Calculate-ClassByDivisionPercent -finalStandings $finalStandings
 
+Write-Host "Writing final standings to file."
 $finalStandings | Export-Excel $finalStandingsExcel -WorkSheetname FinalStandings -FreezeTopRow -AutoSize
-
 $finalStandings | Export-CSV $finalStandingsCsvPath -NoTypeInformation
 
+Write-Host "Generating awards html."
 Write-OverallAwards -finalStandings $finalStandings -sectionStats $sectionStats
+
+Write-Host "Writing index.html file"
+$newIndex = Get-Content $indexHtmlSourcePath
+$matchListHtml = Generate-MatchListHtml -sectionMatchesConfigJson $sectionMatchesConfigJson
+$newIndex = $newIndex -replace "\[matchListTable\]", $matchListHtml
+$newIndex | Out-File $indexHtmlNewPath
+
+Write-Host "Writing shooter-breakdown.html file"
+$newShooterStat = Get-Content $shooterStatHtmlSourcePath
+$sectionStatHtml = $sectionStats | ConvertTo-HTML -Fragment
+$newShooterStat = $newShooterStat -replace "\[shooterBreakdown\]", $sectionStatHtml
+$newShooterStat | Out-File $shooterStatHtmlNewPath
+
+Write-Host "Copying other web files to repo"
+Copy-Item -Path $global:standingByDivisionHtmlOutputPath -Destination $standingByDivisionHtmlPath
+Copy-Item -Path $global:standingByClassHtmlOutputPath -Destination $standingByClassHtmlPath
+Copy-Item -Path $global:awardsHtmlOutputPath -Destination $awardsHtmlPath
+
 
 if ($PassThruRaw)
 {
@@ -1075,5 +1188,7 @@ if ($PassThruFinal)
 {
 	$finalStandings
 }
-$sectionStats | ft
+#$sectionStats | ft
+
+
 
