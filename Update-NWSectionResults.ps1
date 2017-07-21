@@ -100,7 +100,7 @@ function Get-OverallByDivisionPercent
 	
 	foreach ($shooter in $matchInfo.matchShooters)
 	{
-		$uspsaNumber = $shooter.sh_id
+		$uspsaNumber = $shooter.sh_id.Replace("-","")
 		$firstName = $shooter.sh_fn
 		$lastName = $shooter.sh_ln
 		$division = $shooter.sh_dvp
@@ -114,6 +114,11 @@ function Get-OverallByDivisionPercent
 		# - Shooter changes to lifetime or three year membership midseason (might have another fix to this by dropping prefix
 		# - Typos in name or USPSA number
 		# - Discrepencies between division or class names
+		
+		if ($division -eq "CO")
+		{
+			$division = "Carry Optics"
+		}
 		
 		if ($lastName -eq "Hong" -and $firstName -eq "Andrew")
 		{
@@ -265,6 +270,7 @@ function Build-MasterSheet
 			Division = ""
 			Class = ""
 			SectionScore = ""
+			CurrentAverage = ""
 			ScoresUsed = ""
 			SectionMember = $false
 			SectionStatus = "Non-Member"
@@ -319,12 +325,16 @@ function Process-Standings
 			{
 				[single]$average = $null
 				$shooterStanding.ScoresUsed = "Not eligible for series score. $($bestOfResults.length) out of $BestXOf required matches."
+				$averageObj = $shooterResults.DivisionPercent | Measure-Object -Average
+				[single]$currentAverage = [single]([math]::Round($averageObj.Average,2))
+				$shooterStanding.CurrentAverage = $currentAverage
 			}
 			else
 			{
 				$averageObj = $bestOfResults.DivisionPercent | Measure-Object -Average
 				[single]$average = [single]([math]::Round($averageObj.Average,2))
 				$shooterStanding.ScoresUsed = $bestOfResults.Club -join ';'
+				$shooterStanding.CurrentAverage = $average
 			}
 			#Write-Host "Average is, $average"
 			
