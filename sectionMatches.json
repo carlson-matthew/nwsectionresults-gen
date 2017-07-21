@@ -1,61 +1,106 @@
 {
-	"Matches": [
-		{
-			"MatchNumber": 1,
-			"Club": "Shelton",
-			"InputType": "CSV",
-			"PractiscoreID": "",
-			"PractiScoreURL": "",
-			"MatchDate": "6/5/2016",
-			"CSVPath": "C:\\Temp\\practigrab\\SheltonChampionshipSeries.csv"
-		},
-		{
-			"MatchNumber": 2,
-			"Club": "Renton",
-			"InputType": "PractiScore",
-			"PractiscoreID": "c0d04f80-8c8b-439c-9e6c-933b62e32779",
-			"PractiScoreURL": "https://practiscore.com/results/new/22132",
-			"MatchDate": "6/26/2016"
-		},
-		{
-			"MatchNumber": 3,
-			"Club": "Marysville",
-			"InputType": "PractiScore",
-			"PractiscoreID": "70450aa3-929b-4283-9f0c-10691519479e",
-			"PractiScoreURL": "https://practiscore.com/results/new/23131",
-			"MatchDate": "7/17/2016"
-		},
-		{
-			"MatchNumber": 4,
-			"Club": "Mt. Rainer's Shadow",
-			"InputType": "PractiScore",
-			"PractiscoreID": "b7e8f386-3a61-4669-acab-82f83f265955",
-			"PractiScoreURL": "https://practiscore.com/results/new/23218",
-			"MatchDate": "7/19/2016"
-		},
-		{
-			"MatchNumber": 5,
-			"Club": "Paul Bunyan",
-			"InputType": "PractiScore",
-			"PractiscoreID": "e425850a-b567-44a6-a99e-e6d1daed3ab5",
-			"PractiScoreURL": "https://practiscore.com/results/new/25637",
-			"MatchDate": "9/11/2016"
-		},
-		{
-			"MatchNumber": 6,
-			"Club": "Custer",
-			"InputType": "PractiScore",
-			"PractiscoreID": "878847f0-2b71-4565-9f15-a1227a4175e2",
-			"PractiScoreURL": "https://practiscore.com/results/new/26652",
-			"MatchDate": "11/2/2016"
-		},
-		{
-			"MatchNumber": 7,
-			"Club": "Kitsap",
-			"InputType": "PractiScore",
-			"PractiscoreID": "29cf203d-93ab-4052-ab7f-68f4a7d0931b",
-			"PractiScoreURL": "https://practiscore.com/results/new/28078",
-			"MatchDate": "11/5/2016"
-		}
-	]
+	"2016": {
+		"Championship": "FALSE",
+		"Matches": [
+			{
+				"MatchNumber": 1,
+				"Club": "Shelton",
+				"InputType": "CSV",
+				"PractiscoreID": "",
+				"PractiScoreURL": "",
+				"MatchDate": "6/5/2016",
+				"CSVPath": "C:\\Temp\\practigrab\\SheltonChampionshipSeries.csv"
+			},
+			{
+				"MatchNumber": 2,
+				"Club": "Renton",
+				"InputType": "PractiScore",
+				"PractiscoreID": "c0d04f80-8c8b-439c-9e6c-933b62e32779",
+				"PractiScoreURL": "https://practiscore.com/results/new/22132",
+				"MatchDate": "6/26/2016"
+			},
+			{
+				"MatchNumber": 3,
+				"Club": "Marysville",
+				"InputType": "PractiScore",
+				"PractiscoreID": "70450aa3-929b-4283-9f0c-10691519479e",
+				"PractiScoreURL": "https://practiscore.com/results/new/23131",
+				"MatchDate": "7/17/2016"
+			},
+			{
+				"MatchNumber": 4,
+				"Club": "Mt. Rainer's Shadow",
+				"InputType": "PractiScore",
+				"PractiscoreID": "b7e8f386-3a61-4669-acab-82f83f265955",
+				"PractiScoreURL": "https://practiscore.com/results/new/23218",
+				"MatchDate": "7/19/2016"
+			},
+			{
+				"MatchNumber": 5,
+				"Club": "Paul Bunyan",
+				"InputType": "PractiScore",
+				"PractiscoreID": "e425850a-b567-44a6-a99e-e6d1daed3ab5",
+				"PractiScoreURL": "https://practiscore.com/results/new/25637",
+				"MatchDate": "9/11/2016"
+			},
+			{
+				"MatchNumber": 6,
+				"Club": "Custer",
+				"InputType": "PractiScore",
+				"PractiscoreID": "878847f0-2b71-4565-9f15-a1227a4175e2",
+				"PractiScoreURL": "https://practiscore.com/results/new/26652",
+				"MatchDate": "11/2/2016"
+			},
+			{
+				"MatchNumber": 7,
+				"Club": "Kitsap",
+				"InputType": "PractiScore",
+				"PractiscoreID": "29cf203d-93ab-4052-ab7f-68f4a7d0931b",
+				"PractiScoreURL": "https://practiscore.com/results/new/28078",
+				"MatchDate": "11/5/2016"
+			}
+		]
+	},
+	"2017": {
+		"Championship": "TRUE",
+		"Matches": [
+			{
+				"MatchNumber": 1,
+				"Club": "Shelton",
+				"InputType": "CSV",
+				"PractiscoreID": "",
+				"PractiScoreURL": "",
+				"MatchDate": "6/5/2016",
+				"CSVPath": ".\\SheltonChampionshipSeries-2017.csv",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 2,
+				"Club": "Renton-1",
+				"InputType": "PractiScore",
+				"PractiscoreID": "fb3396c8-9006-4999-a3b5-bb07279ff95c",
+				"PractiScoreURL": "https://practiscore.com/results/new/38673",
+				"MatchDate": "6/25/2017",
+				"Championship": "TRUE"
+			},
+			{
+				"MatchNumber": 3,
+				"Club": "Renton-2",
+				"InputType": "PractiScore",
+				"PractiscoreID": "fb3396c8-9006-4999-a3b5-bb07279ff95c",
+				"PractiScoreURL": "https://practiscore.com/results/new/38673",
+				"MatchDate": "6/25/2017",
+				"Championship": "TRUE"
+			},
+			{
+				"MatchNumber": 4,
+				"Club": "Marysville",
+				"InputType": "PractiScore",
+				"PractiscoreID": "6b0f0de1-c88a-47da-b6cf-cd22389a775e",
+				"PractiScoreURL": "https://practiscore.com/results/new/39841",
+				"MatchDate": "7/16/2017",
+				"Championship": "FALSE"
+			}
+		]
+	}
 }

@@ -1,4 +1,5 @@
 {
+	"Season": "2017",
 	"Divisions": [
 		"Carry Optics",
 		"Limited",
@@ -18,6 +19,10 @@
 		"D",
 		"U"
 	],
+	"Eligibility": {
+		"BestXOf": 4,
+		"BestXOfNoChallenge": 3
+	},
 	"AwardParameters":	{
 		"OverallPlaceLimit": 3,
 		"OverallMin": 5,

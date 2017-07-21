@@ -2,13 +2,19 @@
 Param
 (
 	[Parameter(Mandatory=$false)]
-	[string]$SectionMatchesConfigPath="C:\Temp\Update-NWSectionResults\sectionMatches.json",
+	[string]$Year,
+	
+	[Parameter(Mandatory=$false)]
+	[string]$SectionMatchesConfigPath=".\sectionMatches.json",
 	
 	[Parameter(Mandatory=$false)]
 	[switch]$PassThruRaw,
 	
 	[Parameter(Mandatory=$false)]
-	[switch]$PassThruFinal
+	[switch]$PassThruFinal,
+	
+	[Parameter(Mandatory=$false)]
+	[switch]$FinalCalc
 )
 
 # Creates the specified folder if it does not already exist.
@@ -287,7 +293,7 @@ function Process-Standings
 		$sectionShooters,
 		
 		[Parameter(Mandatory=$false)]
-		[int]$BestXOf=3
+		[int]$BestXOf=4
 	)
 	
 	$standingsRaw | foreach-object {$_.DivisionPercent = [single]$_.DivisionPercent}
@@ -985,7 +991,7 @@ function Generate-MatchListHtml
 	
 	$matchInfoList = @()
 
-	foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
+	foreach ($sectionMatch in $sectionMatchesConfigJson."$Year".Matches)
 	{
 
 		$matchInfo = [pscustomobject]@{
@@ -1002,7 +1008,7 @@ function Generate-MatchListHtml
 	$matchInfoHtml = $matchInfoList | ConvertTo-HTML -Fragment
 	#$matchInfoList
 	
-	foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
+	foreach ($sectionMatch in $sectionMatchesConfigJson."$Year".Matches)
 	{
 		if ($sectionMatch.PractiScoreURL)
 		{
@@ -1044,15 +1050,7 @@ $global:awardsHtmlOutputPath = "$($global:standingsDir)\awardsHtml-$($date).html
 $global:cssPath = "$($global:outputDir)\nwsectionresults.css"
 $global:style = Get-Content $global:cssPath
 
-# Public HTML URLs
-$htmlLocalRepoDir = "C:\Users\macarlso\Source\Repos\nwsectionresults"
-$indexHtmlSourcePath = "$($htmlLocalRepoDir)\index-source.html"
-$indexHtmlNewPath = "$($htmlLocalRepoDir)\index.html"
-$shooterStatHtmlSourcePath = "$($htmlLocalRepoDir)\shooter-breakdown-source.html"
-$shooterStatHtmlNewPath = "$($htmlLocalRepoDir)\shooter-breakdown.html"
-$awardsHtmlPath = "$($htmlLocalRepoDir)\awards.html"
-$standingByDivisionHtmlPath = "$($htmlLocalRepoDir)\standingByDivision.html"
-$standingByClassHtmlPath = "$($htmlLocalRepoDir)\standingByClass.html"
+
 
 Create-Folder -folderPath $global:tempDir
 Create-Folder -folderPath $global:outputDir
@@ -1060,8 +1058,10 @@ Create-Folder -folderPath $global:standingsDir
 
 $finalStandingsExcel = "$($global:standingsDir)\finalStandings-$($date).xlsx"
 
-$uspsaConfigPath = "$($global:outputDir)\uspsaconfig.json"
+$championshipYear = $sectionMatchesConfigJson.$Season.Championship
+$uspsaConfigPath = ".\uspsaconfig.json"
 $global:uspsaConfigJson = Get-Content $uspsaConfigPath | ConvertFrom-Json
+$global:season = $global:uspsaConfigJson.Season
 $global:divisions = $global:uspsaConfigJson.Divisions
 $global:classes = $global:uspsaConfigJson.Classes
 $global:overallPlaceLimit = $global:uspsaConfigJson.AwardParameters.OverallPlaceLimit
@@ -1069,6 +1069,41 @@ $global:overallMin = $global:uspsaConfigJson.AwardParameters.OverallMin
 $global:classPlaceLimit = $global:uspsaConfigJson.AwardParameters.ClassPlaceLimit
 $global:classMinFirst = $global:uspsaConfigJson.AwardParameters.ClassMinFirst
 $global:ClassInterval = $global:uspsaConfigJson.AwardParameters.ClassInterval
+
+if ($championshipYear)
+{
+	$global:bestXOf = $global:uspsaConfigJson.Eligibility.BestXOf
+}
+else
+{
+	$global:bestXOf = $global:uspsaConfigJson.Eligibility.BestXOfNoChallenge
+}
+
+# Public HTML URLs
+$htmlLocalRepoDir = "C:\Users\macarlso\Source\Repos\nwsectionresults"
+
+$indexHtmlNewPath = "$($htmlLocalRepoDir)\$season\index.html"
+$shooterStatHtmlSourcePath = "$($htmlLocalRepoDir)\shooter-breakdown-source.html"
+$shooterStatHtmlNewPath = "$($htmlLocalRepoDir)\$season\shooter-breakdown.html"
+$awardsHtmlPath = "$($htmlLocalRepoDir)\$season\awards.html"
+$standingByDivisionHtmlPath = "$($htmlLocalRepoDir)\$season\standingByDivision.html"
+$standingByClassHtmlPath = "$($htmlLocalRepoDir)\$season\standingByClass.html"
+$finalStandingsRawHtmlSourcePath = "$($htmlLocalRepoDir)\finalstandingsraw-source.html"
+$finalStandingsRawHtmlNewPath = "$($htmlLocalRepoDir)\$season\finalstandingsraw.html"
+
+if ($FinalCalc)
+{
+	$indexHtmlSourcePath = "$($htmlLocalRepoDir)\index-source.html"
+}
+else
+{
+	$indexHtmlSourcePath = "$($htmlLocalRepoDir)\index-source-midseason.html"
+}
+
+if ($Year)
+{
+	$global:season = $Year
+}
 
 if ($global:classPlaceLimit -eq -1)
 {
@@ -1099,8 +1134,8 @@ $($global:classMinFirst + ($global:ClassInterval * 2)) shooters = 3 shooters awa
 
 $standingsRaw = @()
 
-
-foreach ($sectionMatch in $sectionMatchesConfigJson.Matches)
+Write-Host "Processing section matches"
+foreach ($sectionMatch in $sectionMatchesConfigJson.$Season.Matches)
 {
 	Write-Host "Getting overall results by division for club, $($sectionMatch.Club)"
 	if ($sectionMatch.InputType -eq "CSV")
@@ -1137,7 +1172,7 @@ $standingsRaw | Export-CSV $standingsRawOutputCsvPath -NoTypeInformation
 $standingsRaw | Export-Excel $finalStandingsExcel -WorkSheetname RawStandings -FreezeTopRow -AutoSize
 
 Write-Host "Processing final standings."
-$finalStandings = Process-Standings -standingsRaw $standingsRaw -sectionShooters $sectionShooters
+$finalStandings = Process-Standings -standingsRaw $standingsRaw -sectionShooters $sectionShooters -BestXOf $global:bestXOf
 
 Write-Host "Calculating section stats."
 $sectionStats = Calculate-SectionStats -finalStandings $finalStandings -rawStandings $standingsRaw
@@ -1165,6 +1200,7 @@ Write-Host "Writing index.html file"
 $newIndex = Get-Content $indexHtmlSourcePath
 $matchListHtml = Generate-MatchListHtml -sectionMatchesConfigJson $sectionMatchesConfigJson
 $newIndex = $newIndex -replace "\[matchListTable\]", $matchListHtml
+$newIndex = $newIndex -replace "\[season\]", $season
 $newIndex | Out-File $indexHtmlNewPath
 
 Write-Host "Writing shooter-breakdown.html file"
@@ -1172,6 +1208,14 @@ $newShooterStat = Get-Content $shooterStatHtmlSourcePath
 $sectionStatHtml = $sectionStats | ConvertTo-HTML -Fragment
 $newShooterStat = $newShooterStat -replace "\[shooterBreakdown\]", $sectionStatHtml
 $newShooterStat | Out-File $shooterStatHtmlNewPath
+
+Write-Host "Writing final standings raw html file"
+$newFinalHtml = Get-Content $finalStandingsRawHtmlSourcePath
+$finalStandingsHtml = $finalStandings | Sort LastName,FirstName | ConvertTo-HTML -Fragment
+$newFinalHtml = $newFinalHtml -replace "\[finalStandingsRaw\]", $finalStandingsHtml
+$newFinalHtml = $newFinalHtml -replace "\[season\]", $season
+$newFinalHtml | Out-File $finalStandingsRawHtmlNewPath
+
 
 Write-Host "Copying other web files to repo"
 Copy-Item -Path $global:standingByDivisionHtmlOutputPath -Destination $standingByDivisionHtmlPath
