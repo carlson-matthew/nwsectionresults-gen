@@ -1001,7 +1001,7 @@ function Generate-MatchListHtml
 	
 	$matchInfoList = @()
 
-	foreach ($sectionMatch in $sectionMatchesConfigJson."$Year".Matches)
+	foreach ($sectionMatch in $sectionMatchesConfigJson."$Season".Matches)
 	{
 
 		$matchInfo = [pscustomobject]@{
@@ -1010,6 +1010,7 @@ function Generate-MatchListHtml
 				Date = $sectionMatch.MatchDate
 				"PractiScore Link" = "practiLink-$($sectionMatch.MatchNumber)"
 				"USPSA Link" = "uspsaLink-$($sectionMatch.MatchNumber)"
+				"ChallengeMatch?" = $sectionMatch.Championship
 			}
 			
 		$matchInfoList += $matchInfo
@@ -1018,7 +1019,7 @@ function Generate-MatchListHtml
 	$matchInfoHtml = $matchInfoList | ConvertTo-HTML -Fragment
 	#$matchInfoList
 	
-	foreach ($sectionMatch in $sectionMatchesConfigJson."$Year".Matches)
+	foreach ($sectionMatch in $sectionMatchesConfigJson."$Season".Matches)
 	{
 		if ($sectionMatch.PractiScoreURL)
 		{
