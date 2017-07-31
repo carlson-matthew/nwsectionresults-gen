@@ -40,13 +40,20 @@ function Create-Folder
 	}
 }
 
-function getHTML ($uri, $timeoutNum=5) {
+function getHTML ($uri, $timeoutNum=5, $postParams) {
 	$count = 0
 	$success = $false
 	Write-Debug "Function: getHTML; Input: uri; Value: *$uri*"
 	while (($count -lt $timeoutNum-1) -and (!$success)) {
 		try {
-			$html = Invoke-WebRequest -Uri $uri
+			if ($postParams)
+			{
+				$html = Invoke-WebRequest -Uri $uri -Method POST -Body $postParams
+			}
+			else
+			{
+				$html = Invoke-WebRequest -Uri $uri
+			}
 			$success = $true
 		}
 		catch {
@@ -61,6 +68,54 @@ function getHTML ($uri, $timeoutNum=5) {
 	
 	# Return html object.
 	return $html
+}
+
+function Get-ActualMemberNumber ($UspsaNumber)
+{
+	$memberNumber = "PEN"
+	if ($global:currentUspsanumber.$UspsaNumber)
+	{
+		Write-Verbose "Existing USPSA lookup found"
+		$memberNumber = $global:currentUspsanumber.$UspsaNumber
+	}
+	else
+	{
+		Write-Verbose "Existing USPSA lookup NOT found"
+		$postParams = @{Submit='lookup';number="$UspsaNumber"}
+		$uri = "https://uspsa.org/uspsa-classifier-lookup-results.php"
+		$html = getHTML -uri $uri -timeoutNum 5 -postParams $postParams
+		#Write-Host "Retrieved html"
+		
+		$parsedHtmlA = $html.ParsedHtml.getElementsByTagName("a")
+		#$parsedHtmlA | out-file c:\temp\href.txt
+
+		$count = 0
+		$length = $parsedHtmlA.length
+		#Write-Host $length
+		#$memberNumber = "NA"
+		while (($count -lt $length) -and ($memberNumber -eq "PEN"))
+		{
+			#Write-Host "Count: $count"
+			if ($parsedHtmlA[$count].href)
+			{
+				#Write-Host "not null"
+				if ($parsedHtmlA[$count].href.Contains("?number="))
+				{
+					#Write-Host $parsedHtmlA[$count].href
+					#$memberNumber = $parsedHtmlA[$count + 1]
+					$memberNumber = $parsedHtmlA[$count].href.Split("=")[1].Split("&")[0]
+					#$count = $length
+				}
+			}
+			$count++
+		}
+
+		$global:currentUspsanumber.Add($UspsaNumber,$memberNumber)
+	}
+	
+	Write-Verbose "$UspsaNumber - $memberNumber"
+	
+	return $memberNumber
 }
 
 
@@ -118,6 +173,16 @@ function Get-OverallByDivisionPercent
 		if ($division -eq "CO")
 		{
 			$division = "Carry Optics"
+		}
+		
+		if ($uspsaNumber -eq "101809")
+		{
+			$uspsaNumber = "A101809"
+		}
+		
+		if ($uspsaNumber.ToUpper().Contains("PEN"))
+		{
+			$uspsaNumber = "PEN"
 		}
 		
 		if ($lastName -eq "Hong" -and $firstName -eq "Andrew")
@@ -179,6 +244,8 @@ function Get-OverallByDivisionPercent
 		{
 			$uspsaNumber = "FY22573"
 		}
+		
+		$uspsaNumber = Get-ActualMemberNumber -UspsaNumber $uspsaNumber
 		
 		$sectionMember = $false
 		$sectionStatus = "Non-member"
@@ -1060,6 +1127,7 @@ $global:standingByClassHtmlOutputPath = "$($global:standingsDir)\standingByClass
 $global:awardsHtmlOutputPath = "$($global:standingsDir)\awardsHtml-$($date).html"
 $global:cssPath = "$($global:outputDir)\nwsectionresults.css"
 $global:style = Get-Content $global:cssPath
+$global:currentUspsanumber = @{}
 
 
 
@@ -1089,6 +1157,8 @@ else
 {
 	$global:bestXOf = $global:uspsaConfigJson.Eligibility.BestXOfNoChallenge
 }
+
+Write-Host "Bestof: " $global:bestXOf
 
 # Public HTML URLs
 $htmlLocalRepoDir = "C:\Users\macarlso\Source\Repos\nwsectionresults"
