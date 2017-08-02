@@ -111,6 +111,16 @@
 				"MatchDate": "7/16/2017",
 				"UspsaURL": "https://www.uspsa.org/uspsa-display-match-results-detail.php?indx=22251",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 5,
+				"Club": "Mt. Rainer's Shadow",
+				"InputType": "PractiScore",
+				"PractiscoreID": "ac2eda34-4ea1-4d9c-89e5-423fa1ac61fd",
+				"PractiScoreURL": "https://practiscore.com/results/new/40771",
+				"MatchDate": "8/1/2017",
+				"UspsaURL": "NA",
+				"Championship": "FALSE"
 			}
 		]
 	}

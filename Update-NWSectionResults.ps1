@@ -395,6 +395,14 @@ function Process-Standings
 				$averageObj = $shooterResults.DivisionPercent | Measure-Object -Average
 				[single]$currentAverage = [single]([math]::Round($averageObj.Average,2))
 				$shooterStanding.CurrentAverage = $currentAverage
+				
+				if ($uspsaNumber -eq  "A85001")
+				{
+					$shooterResults.DivisionPercent | Out-File C:\temp\a85001.txt -Append
+					$averageObj | Out-File C:\temp\a85001.txt -Append
+					$currentAverage  | Out-File C:\temp\a85001.txt -Append
+					Write-Host "Done!" -foregroundcolor red
+				}
 			}
 			else
 			{
@@ -402,6 +410,16 @@ function Process-Standings
 				[single]$average = [single]([math]::Round($averageObj.Average,2))
 				$shooterStanding.ScoresUsed = $bestOfResults.Club -join ';'
 				$shooterStanding.CurrentAverage = $average
+				if ($uspsaNumber -eq  "A85001")
+				{
+					$shooterResults | Out-File C:\temp\a85001.txt -Append
+					$shooterDivs | Out-File C:\temp\a85001.txt -Append
+					$bestOfResults | Out-File C:\temp\a85001.txt -Append
+					$bestOfResults.DivisionPercent | Out-File C:\temp\a85001.txt -Append
+					$averageObj | Out-File C:\temp\a85001.txt -Append
+					$average  | Out-File C:\temp\a85001.txt -Append
+					Write-Host "Done!" -foregroundcolor red
+				}
 			}
 			#Write-Host "Average is, $average"
 			
