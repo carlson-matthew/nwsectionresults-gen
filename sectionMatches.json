@@ -1,6 +1,6 @@
 {
 	"2016": {
-		"Championship": "FALSE",
+		"Championship": false,
 		"Matches": [
 			{
 				"MatchNumber": 1,
@@ -69,7 +69,7 @@
 		]
 	},
 	"2017": {
-		"Championship": "TRUE",
+		"Championship": true,
 		"Matches": [
 			{
 				"MatchNumber": 1,

@@ -1155,10 +1155,21 @@ Create-Folder -folderPath $global:standingsDir
 
 $finalStandingsExcel = "$($global:standingsDir)\finalStandings-$($date).xlsx"
 
-$championshipYear = $sectionMatchesConfigJson.$Season.Championship
+
 $uspsaConfigPath = ".\uspsaconfig.json"
 $global:uspsaConfigJson = Get-Content $uspsaConfigPath | ConvertFrom-Json
-$global:season = $global:uspsaConfigJson.Season
+
+if ($Year)
+{
+	Write-Host "Season override to $Year"
+	$global:season = $Year
+}
+else
+{
+	$global:season = $global:uspsaConfigJson.Season
+	Write-Host "Season set to " $global:season
+}
+
 $global:divisions = $global:uspsaConfigJson.Divisions
 $global:classes = $global:uspsaConfigJson.Classes
 $global:overallPlaceLimit = $global:uspsaConfigJson.AwardParameters.OverallPlaceLimit
@@ -1166,17 +1177,21 @@ $global:overallMin = $global:uspsaConfigJson.AwardParameters.OverallMin
 $global:classPlaceLimit = $global:uspsaConfigJson.AwardParameters.ClassPlaceLimit
 $global:classMinFirst = $global:uspsaConfigJson.AwardParameters.ClassMinFirst
 $global:ClassInterval = $global:uspsaConfigJson.AwardParameters.ClassInterval
+$championshipYear = $sectionMatchesConfigJson.$Season.Championship
+
 
 if ($championshipYear)
 {
+	Write-Host "This is a NW Challenge year" $championshipYear
 	$global:bestXOf = $global:uspsaConfigJson.Eligibility.BestXOf
 }
 else
 {
+	Write-Host "This is NOT a NW Challenge year"
 	$global:bestXOf = $global:uspsaConfigJson.Eligibility.BestXOfNoChallenge
 }
 
-Write-Host "Bestof: " $global:bestXOf
+Write-Host "Using best " $global:bestXOf " of n scores."
 
 # Public HTML URLs
 $htmlLocalRepoDir = "C:\Users\macarlso\Source\Repos\nwsectionresults"
@@ -1199,10 +1214,6 @@ else
 	$indexHtmlSourcePath = "$($htmlLocalRepoDir)\index-source-midseason.html"
 }
 
-if ($Year)
-{
-	$global:season = $Year
-}
 
 if ($global:classPlaceLimit -eq -1)
 {
