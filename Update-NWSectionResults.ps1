@@ -190,6 +190,11 @@ function Get-OverallByDivisionPercent
 			$uspsaNumber = "A83199"
 		}
 		
+		if ($lastName -eq "Niemann" -and $firstName -eq "Kamryn")
+		{
+			$uspsaNumber = "A101879"
+		}
+		
 		if ($class -eq "GM")
 		{
 			$class = "G"
