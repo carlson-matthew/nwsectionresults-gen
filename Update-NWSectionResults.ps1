@@ -256,6 +256,16 @@ function Get-OverallByDivisionPercent
 		$sectionStatus = "Non-member"
 		# Check to see if the shooter is in the section. Remove '-' to standardize.
 		# TODO: Sanitize USPSA number to ignore membershp type prefix. Number seem to never change between TY, A, F, etc. Could use this as a truly unique value.
+		
+		switch ($uspsaNumber)
+		{
+			{$_.StartsWith("A")} { $uspsaNumberClean = $uspsaNumber.Substring(1) }
+			{$_.StartsWith("B")} { $uspsaNumberClean = $uspsaNumber }
+			{$_.StartsWith("F")} { $uspsaNumberClean = $uspsaNumber.Substring(1) }
+			{$_.StartsWith("TY")} { $uspsaNumberClean = $uspsaNumber.Substring(2) }
+		}
+		#Write-Host "Uspsa number clean: " $uspsaNumberClean
+		#if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-","").Replace("A","").Replace("F","").Replace("TY",""))
 		if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
 		{
 			$sectionMember = $true
@@ -389,7 +399,7 @@ function Process-Standings
 		{
 			#Write-Host "Calculating average scores for shooter, $uspsaNumber"
 			$shooterStanding = $shooterStandingObj.PsObject.Copy()
-			$shooterResults = $standingsRaw | Where {($_.USPSANumber -eq $uspsaNumber) -and ($_.DivisionPercent -ne 0) -and $_.Division -eq $division}
+			$shooterResults = $standingsRaw | Where {($_.USPSANumber -eq $uspsaNumber) -and ($_.DivisionPercent -ne 0) -and $_.Division -eq $division} | Sort-Object ClubOrdered 
 			$bestOfResults = @()
 			$bestOfResults += $shooterResults | Sort DivisionPercent -Descending | Select -First $BestXOf
 			
