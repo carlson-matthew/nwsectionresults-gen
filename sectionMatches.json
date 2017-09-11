@@ -131,6 +131,16 @@
 				"MatchDate": "9/2/2017",
 				"UspsaURL": "https://www.uspsa.org/uspsa-display-match-results-detail.php?indx=22950",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 7,
+				"Club": "Paul Bunyan",
+				"InputType": "PractiScore",
+				"PractiscoreID": "4f9a5ea6-ef3d-4757-bbb2-c7d515884058",
+				"PractiScoreURL": "https://practiscore.com/results/new/43214",
+				"MatchDate": "9/10/2017",
+				"UspsaURL": "",
+				"Championship": "FALSE"
 			}
 		]
 	}
