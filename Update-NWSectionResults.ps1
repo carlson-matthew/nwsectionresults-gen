@@ -190,6 +190,11 @@ function Get-OverallByDivisionPercent
 			$uspsaNumber = "A83199"
 		}
 		
+		if ($lastName -eq "LeRoux #1" -and $firstName -eq "Scott")
+		{
+			$uspsaNumber = "L3253"
+		}
+		
 		if ($lastName -eq "Niemann" -and $firstName -eq "Kamryn")
 		{
 			$uspsaNumber = "A101879"
@@ -266,7 +271,8 @@ function Get-OverallByDivisionPercent
 		}
 		#Write-Host "Uspsa number clean: " $uspsaNumberClean
 		#if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-","").Replace("A","").Replace("F","").Replace("TY",""))
-		if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
+		$uspsaClean = $uspsaNumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY","")
+		if ($uspsaClean -in $sectionShooters.USPSANumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY",""))
 		{
 			$sectionMember = $true
 			$sectionStatus = "Member"
@@ -445,19 +451,66 @@ function Process-Standings
 			}
 			
 			$shooterStanding.USPSANumber = $uspsaNumber.Replace("-","")
-			$shooterStanding.FirstName = $shooterResults[0].FirstName
-			$shooterStanding.LastName = $shooterResults[0].LastName
+			$shooterStanding.FirstName = $shooterResults[0].FirstName.Substring(0,1).ToUpper()+$shooterResults[0].FirstName.Substring(1).ToLower()
+			$shooterStanding.LastName = $shooterResults[0].LastName.Substring(0,1).ToUpper()+$shooterResults[0].LastName.Substring(1).ToLower()
 			$shooterStanding.Division = $division
-			$shooterStanding.Class = $shooterResults[0].Class
 			$shooterStanding.SectionScore = $average
+			
+			if ($shooterResults[0].Class -eq "U")
+			{
+				# Exception for known unclassified that now have classifications
+				# Check with actual USPSA classifier will be added later
+				$class = "U"
+				
+				if ($uspsaNumber -eq "TY45299")
+				{
+					$class = "B"
+				}
+				if ($uspsaNumber -eq "A72439")
+				{
+					$class = "C"
+				}
+				if ($uspsaNumber -eq "A94597")
+				{
+					$class = "B"
+				}
+				if ($uspsaNumber -eq "TY93603")
+				{
+					$class = "C"
+				}
+				if ($uspsaNumber -eq "TY97470")
+				{
+					$class = "C"
+				}
+				if ($uspsaNumber -eq "A97925")
+				{
+					$class = "D"
+				}
+				if ($uspsaNumber -eq "A101470")
+				{
+					$class = "C"
+				}
+				
+				$shooterStanding.Class = $class
+			}
+			else
+			{
+				$shooterStanding.Class = $shooterResults[0].Class
+			}
 			
 			# Check to see if the shooter is in the section. Remove '-' to standardize.
 			# TODO: Sanitize USPSA number to ignore membershp type prefix. Number seem to never change between TY, A, F, etc. Could use this as a truly unique value.
-			if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
+			$uspsaClean = $uspsaNumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY","")
+			if ($uspsaClean -in $sectionShooters.USPSANumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY",""))
 			{
 				$shooterStanding.SectionMember = $true
 				$shooterStanding.SectionStatus = "Member"
 			}
+			<#if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
+			{
+				$shooterStanding.SectionMember = $true
+				$shooterStanding.SectionStatus = "Member"
+			}#>
 			
 			
 			$finalStandings += $shooterStanding
@@ -574,15 +627,17 @@ function Calculate-ClassByDivisionPercent
 			$fullName = $global:uspsaConfigJson.ClassesAttributes.$class.FullName
 			Write-Debug $fullName
 			
+			$uniqueShooters = @()
+			$uniqueShooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.Class -eq $class)} | Select USPSANumber -Unique
+			$numUniqueShooters = $uniqueShooters.Count
+			
 			Generate-Html -elementType "divClass" -htmlOutputPath $global:standingByClassHtmlOutputPath
-			Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml $fullName
+			Generate-Html -elementType "divClassHeader" -htmlOutputPath $global:standingByClassHtmlOutputPath -innerHtml "$fullName <span class=`"classUniqueShooters`">($numUniqueShooters unique shooters)</span>"
 			Generate-Html -elementType "divClassBody" -htmlOutputPath $global:standingByClassHtmlOutputPath
 			Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByClassHtmlOutputPath
 			
 			
-			$uniqueShooters = @()
-			$uniqueShooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.Class -eq $class)} | Select USPSANumber -Unique
-			$numUniqueShooters = $uniqueShooters.Count
+			
 			
 			$eligibleShooters = @()
 			$eligibleShooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.Class -eq $class)} | Sort SectionScore -Descending
@@ -772,15 +827,15 @@ function Calculate-ClassAwards
 		$sectionStats
 	)
 	
-	#Write-Debug "Class Awards Calc"
+	Write-Debug "Class Awards Calc"
 	foreach ($division in $global:divisions)
 	{
-		#Write-Debug "Division: $division"
+		Write-Debug "Division: $division"
 		
-		foreach ($class in $global:classes)
+		foreach ($class in ($global:classes | Where {$_ -ne "U"}))
 		{
 			$classFullName = $global:uspsaConfigJson.ClassesAttributes.$class.FullName
-			#Write-Debug "Class: $classFullName"
+			Write-Debug "Class: $classFullName"
 			
 			$numberUniqueShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).TotalUniqueShooters
 			$numberEligibleShooters = ($sectionStats | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).TotalEligibleSectionShooters
@@ -788,7 +843,7 @@ function Calculate-ClassAwards
 			
 			if ($numberUniqueShooters -ge $global:classMinFirst)
 			{
-				#Write-Debug "The number of shooters in this division ($($numberUniqueShooters)) met the minimum required shoooters ($($global:classMinFirst))."
+				Write-Debug "The number of shooters in this division ($($numberUniqueShooters)) met the minimum required shoooters ($($global:classMinFirst))."
 				
 				# Determine the number of places with the following formula. First place awarded after minimum 5 shooters.
 				# 1 place for every 3 shooters after that till we reach the maximum number of places. This max is configurable.
@@ -804,7 +859,11 @@ function Calculate-ClassAwards
 				}
 				
 				$shooters = @()
-				$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.Class -eq $classFullName) -and ($_.SectionScore -gt 0) -and ($_.OverallAward -eq "") -and ($_.SectionMember)} | Sort SectionScore -Descending
+				$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.Class -eq $class) -and ($_.SectionScore -gt 0) -and ($_.OverallAward -eq "") -and ($_.SectionMember)} | Sort SectionScore -Descending
+				
+				$finalStandings | Export-CSV "C:\Temp\Update-NWSectionResults\temp\final-$($division).$($class).csv"
+				$shooters | Export-CSV "C:\Temp\Update-NWSectionResults\temp\shooters-$($division).$($class).csv"
+				
 				
 				if ($placeLimit -gt $shooters.Count)
 				{
@@ -815,16 +874,16 @@ function Calculate-ClassAwards
 				{
 					$numShooters = $shooters.Length
 					
-					#Write-Debug "numShooters: $numShooters"
-					#Write-Debug "PlaceLimit: $placeLimit"
+					Write-Debug "numShooters: $numShooters"
+					Write-Debug "PlaceLimit: $placeLimit"
 					
 					for ($i = 0; $i -lt $placeLimit; $i++)
 					{
-						#Write-Debug "Working on place $($i + 1) of $placeLimit"
+						Write-Debug "Working on place $($i + 1) of $placeLimit"
 						$uspsaNumber = $shooters[$i].USPSANumber
-						#Write-Debug "placed $uspsaNumber"
+						Write-Debug "placed $uspsaNumber"
 						$place = Get-PlaceFull -place ([string]($i+1))
-						($finalStandings | Where {($_.USPSANumber -eq $uspsaNumber) -and ($_.Division -eq $division) -and ($_.Class -eq $classFullName)}).ClassAward = "$place Place $division $classFullName"
+						($finalStandings | Where {($_.USPSANumber -eq $uspsaNumber) -and ($_.Division -eq $division) -and ($_.Class -eq $class)}).ClassAward = "$place Place $division $classFullName"
 					}
 				}
 			}
