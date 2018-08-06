@@ -143,5 +143,40 @@
 				"Championship": "FALSE"
 			}
 		]
+	},
+	"2018": {
+		"Championship": false,
+		"Matches": [
+			{
+				"MatchNumber": 1,
+				"Club": "Shelton",
+				"InputType": "PractiScore",
+				"PractiscoreID": "d621847d-0d68-4331-8127-029d7ed37e04",
+				"PractiScoreURL": "https://practiscore.com/results/new/56109",
+				"MatchDate": "5/5/2018",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=26389",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 2,
+				"Club": "Jefferson County",
+				"InputType": "PractiScore",
+				"PractiscoreID": "ed54f5bc-48dd-4d87-bb95-5dc0f10bc031",
+				"PractiScoreURL": "https://practiscore.com/results/new/ed54f5bc-48dd-4d87-bb95-5dc0f10bc031",
+				"MatchDate": "7/7/2018",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=27175",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 3,
+				"Club": "Marysville",
+				"InputType": "PractiScore",
+				"PractiscoreID": "986a897d-c978-422e-9d19-dd37cfab8e64",
+				"PractiScoreURL": "https://practiscore.com/results/new/61516",
+				"MatchDate": "7/15/2018",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=27388",
+				"Championship": "FALSE"
+			}
+		]
 	}
 }

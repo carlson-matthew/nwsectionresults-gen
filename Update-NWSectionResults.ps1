@@ -43,7 +43,7 @@ function Create-Folder
 function getHTML ($uri, $timeoutNum=5, $postParams) {
 	$count = 0
 	$success = $false
-	Write-Debug "Function: getHTML; Input: uri; Value: *$uri*"
+	Write-Verbose "Function: getHTML; Input: uri; Value: *$uri*"
 	while (($count -lt $timeoutNum-1) -and (!$success)) {
 		try {
 			if ($postParams)
@@ -255,7 +255,7 @@ function Get-OverallByDivisionPercent
 			$uspsaNumber = "FY22573"
 		}
 		
-		$uspsaNumber = Get-ActualMemberNumber -UspsaNumber $uspsaNumber
+		#$uspsaNumber = Get-ActualMemberNumber -UspsaNumber $uspsaNumber
 		
 		$sectionMember = $false
 		$sectionStatus = "Non-member"
@@ -329,7 +329,7 @@ function Get-StandingsRaw
 				matchResults = $matchResultsJson
 				}
 	$matchOverallByDivision = Get-OverallByDivisionPercent -sectionShooters $sectionShooters -matchInfo $matchInfo
-	$matchOverallByDivision | Export-CSV "C:\temp\practigrab\$($sectionMatch.Club)-ovrbydiv.csv" -NoTypeInformation
+	$matchOverallByDivision | Export-CSV "$($global:standingsDir)\$($sectionMatch.Club)-ovrbydiv.csv" -NoTypeInformation
 	if ($excelPath)
 	{
 		$matchOverallByDivision | Export-Excel -Path $excelPath -WorkSheetname $sectionMatch.Club -FreezeTopRow -AutoSize
@@ -1227,6 +1227,7 @@ Create-Folder -folderPath $global:tempDir
 Create-Folder -folderPath $global:outputDir
 Create-Folder -folderPath $global:standingsDir
 
+
 $finalStandingsExcel = "$($global:standingsDir)\finalStandings-$($date).xlsx"
 
 
@@ -1268,7 +1269,8 @@ else
 Write-Host "Using best " $global:bestXOf " of n scores."
 
 # Public HTML URLs
-$htmlLocalRepoDir = "C:\Users\macarlso\Source\Repos\nwsectionresults"
+$htmlLocalRepoDir = "C:\Repos\nwsectionresults"
+Create-Folder -folderPath "$($htmlLocalRepoDir)\$season"
 
 $indexHtmlNewPath = "$($htmlLocalRepoDir)\$season\index.html"
 $shooterStatHtmlSourcePath = "$($htmlLocalRepoDir)\shooter-breakdown-source.html"
@@ -1395,7 +1397,7 @@ $newShooterStat | Out-File $shooterStatHtmlNewPath
 
 Write-Host "Writing final standings raw html file"
 $newFinalHtml = Get-Content $finalStandingsRawHtmlSourcePath
-$finalStandingsHtml = $finalStandings | Sort LastName,FirstName | ConvertTo-HTML -Fragment
+$finalStandingsHtml = $finalStandings | Sort-Object LastName,FirstName | ConvertTo-HTML -Fragment
 $newFinalHtml = $newFinalHtml -replace "\[finalStandingsRaw\]", $finalStandingsHtml
 $newFinalHtml = $newFinalHtml -replace "\[season\]", $season
 $newFinalHtml | Out-File $finalStandingsRawHtmlNewPath
