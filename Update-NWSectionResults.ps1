@@ -254,6 +254,11 @@ function Get-OverallByDivisionPercent
 		{
 			$uspsaNumber = "FY22573"
 		}
+
+		if ($lastName -eq "Novasky" -and $firstName -eq "Tim")
+		{
+			$uspsaNumber = "A100482"
+		}
 		
 		#$uspsaNumber = Get-ActualMemberNumber -UspsaNumber $uspsaNumber
 		
