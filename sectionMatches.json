@@ -176,6 +176,26 @@
 				"MatchDate": "7/15/2018",
 				"UspsaURL": "https://uspsa.org/match-results-details?index=27388",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 4,
+				"Club": "Mt. Rainer's Shadow",
+				"InputType": "PractiScore",
+				"PractiscoreID": "4a84c481-b601-4c9f-8013-3bf36e25fd3e",
+				"PractiScoreURL": "https://practiscore.com/results/new/63200",
+				"MatchDate": "8/7/2018",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=27670",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 5,
+				"Club": "Custer",
+				"InputType": "PractiScore",
+				"PractiscoreID": "d36aa2dc-adc6-429b-a3b5-cabac9284a06",
+				"PractiScoreURL": "https://practiscore.com/results/new/64937",
+				"MatchDate": "9/2/2018",
+				"UspsaURL": "https://uspsa.org//match-results-details?index=28135",
+				"Championship": "FALSE"
 			}
 		]
 	}

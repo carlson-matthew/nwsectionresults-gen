@@ -259,6 +259,11 @@ function Get-OverallByDivisionPercent
 		{
 			$uspsaNumber = "A100482"
 		}
+
+		if ($lastName -eq "Pukalo" -and $firstName -eq "Chris")
+		{
+			$uspsaNumber = "A89231"
+		}
 		
 		#$uspsaNumber = Get-ActualMemberNumber -UspsaNumber $uspsaNumber
 		
@@ -285,6 +290,7 @@ function Get-OverallByDivisionPercent
 
 		$matchShooters += [pscustomobject]@{
 			USPSANumber = $uspsaNumber.ToUpper()
+			USPSANumberClean = $uspsaClean
 			FirstName = $firstName
 			LastName = $lastName
 			MatchName = $matchInfo.matchName
@@ -1207,6 +1213,73 @@ function Generate-MatchListHtml
 	return $matchInfoHtml
 }
 
+function Get-UspsaNumberWithoutPrefix
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		[string]$UspsaNumber
+	)
+
+	$uspsaNoPrefix = ""
+
+	if ($UspsaNumber.ToUpper().StartsWith("A"))
+	{
+		$uspsaNoPrefix = $UspsaNumber.Replace("A","")
+	}
+	elseif ($UspsaNumber.ToUpper().StartsWith("TY"))
+	{
+		$uspsaNoPrefix = $UspsaNumber.Replace("TY","")
+	}
+	else
+	{
+
+	}
+
+	return $uspsaNoPrefix
+}
+
+function Scrub-UspsaNumbers
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		$standingsRaw
+	)
+	
+	$uniqueUspsaNumberNoPrefix = $standingsRaw | Select-Object USPSANumberClean -Unique
+	$replaceTy = $false
+
+	foreach ($standing in $standingsRaw)
+	{
+		$uniqueShooter = $standingsRaw | Where-Object USPSANumberClean -eq $standing.USPSANumberClean
+		$fullUspsaNumbers = $uniqueShooter.USPSANumber
+		$tyNumber = "TY$($standing.USPSANumberClean)"
+
+		if ($fullUspsaNumbers.Contains($tyNumber))
+		{
+			Write-Verbose "Changing $($standing.USPSANumber) to $($standing.USPSANumber.ToUpper().Replace("A","TY"))"
+			$standing.USPSANumber = $standing.USPSANumber.ToUpper().Replace("A","TY")
+		}
+	}
+	
+	return $standingsRaw
+
+	<#foreach ($uspsaNumber in $uniqueUspsaNumberNoPrefix)
+	{
+		$uniqueShooter = $standingsRaw | Where-Object USPSANumberClean -eq $uspsaNumber
+		$fullUspsaNumbers = $uniqueShooter | Select-Object USPSANumber
+		$aNumber = "A$uspsaNumber"
+		$tyNumber = "TY$uspsaNumber"
+		if ($fullUspsaNumbers.Contains("TY"))
+		{
+			
+		}
+	}#>
+}
+
 
 $date = (get-date -f yyyyMMdd-hhmmss)
 $global:scriptName = "Update-NWSectionResults"
@@ -1357,6 +1430,9 @@ foreach ($sectionMatch in $sectionMatchesConfigJson.$Season.Matches)
 	}
 	
 }
+
+$standingsRaw | Export-CSV "$standingsRawOutputCsvPath-pre.csv" -NoTypeInformation
+$standingsRaw = Scrub-UspsaNumbers -standingsRaw $standingsRaw
 
 Write-Host "Writing raw standings to file."
 $standingsRaw | Export-CSV $standingsRawOutputCsvPath -NoTypeInformation
