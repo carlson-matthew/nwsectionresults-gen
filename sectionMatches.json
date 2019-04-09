@@ -198,5 +198,20 @@
 				"Championship": "FALSE"
 			}
 		]
+	},
+	"2019": {
+		"Championship": true,
+		"Matches": [
+			{
+				"MatchNumber": 1,
+				"Club": "Shelton",
+				"InputType": "PractiScore",
+				"PractiscoreID": "fdb5d794-6f35-4089-a74b-5804ad4485e8",
+				"PractiScoreURL": "https://practiscore.com/results/new/78458",
+				"MatchDate": "4/6/2018",
+				"UspsaURL": "",
+				"Championship": "FALSE"
+			}
+		]
 	}
 }

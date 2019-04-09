@@ -1347,7 +1347,7 @@ else
 Write-Host "Using best " $global:bestXOf " of n scores."
 
 # Public HTML URLs
-$htmlLocalRepoDir = "C:\Repos\nwsectionresults"
+$htmlLocalRepoDir = "C:\Repos\Github\nwsectionresults"
 Create-Folder -folderPath "$($htmlLocalRepoDir)\$season"
 
 $indexHtmlNewPath = "$($htmlLocalRepoDir)\$season\index.html"
