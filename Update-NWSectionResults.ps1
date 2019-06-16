@@ -14,7 +14,10 @@ Param
 	[switch]$PassThruFinal,
 	
 	[Parameter(Mandatory=$false)]
-	[switch]$FinalCalc
+	[switch]$FinalCalc,
+
+	[Parameter(Mandatory=$false)]
+	[switch]$ForceDownload
 )
 
 # Creates the specified folder if it does not already exist.
@@ -118,25 +121,214 @@ function Get-ActualMemberNumber ($UspsaNumber)
 	return $memberNumber
 }
 
-
-function Get-MatchDef ([string]$matchID)
+function Write-Json ()
 {
-	$uri = "https://s3.amazonaws.com/ps-scores/production/$matchID/match_def.json"
-	#Write-Host "Match Def URI: $uri"
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		$Path
+	)
 	
-	$html = getHTML $uri
-	$json = $html | ConvertFrom-Json
+}
+
+function Get-MatchFiles ()
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		[string]$matchID,
+
+		[Parameter(Mandatory=$true)]
+		[string]$Name,
+
+		[Parameter(Mandatory=$false)]
+		[switch]$Force
+	)
+
+	$fileName = "$($global:seasonPath)\$($matchID)-$($Name).json"
+
+	# If we don't want to force a redownload and the file was found locally, get the JSON from the local file.
+	# Else, get the file from practiscore
+	if (!$Force -and (Test-Path $fileName))
+	{
+		$json = Get-Content $fileName | ConvertFrom-Json
+	}
+	else
+	{
+		$uri = "https://s3.amazonaws.com/ps-scores/production/$matchID/$($Name).json"
+		Write-Host "Match Def URI: $uri"
+		
+		$html = getHTML $uri
+		$html.Content | Out-File -FilePath $fileName -Force
+		$json = $html.Content | ConvertFrom-Json
+	}
+
 	return $json
 }
 
-function Get-MatchResults ([string]$matchID)
+# Blame practiscore for the following confusing set of bitwise operations. In the name of speed?
+function Get-Alphas ($scoreFields)
 {
-	$uri = "https://s3.amazonaws.com/ps-scores/production/$matchID/results.json"
-	#Write-Host "Match Results URI: $uri"
-	
-	$html = getHTML $uri
-	$json = $html | ConvertFrom-Json
-	return $json
+	$A_MASK = 0x0000000F
+	$A_MASK2 = 0x0000000F00000000
+	$A_SHIFT = 0
+	$A_SHIFT2 = 28
+
+	return (($scoreFields -band $A_MASK) -shr $A_SHIFT) + (($scoreFields -band $A_MASK2) -shr $A_SHIFT2)
+}
+
+function Get-Bravos ($scoreFields)
+{
+	$B_MASK = 0x000000F0
+	$B_MASK2 = 0x000000F000000000
+	$B_SHIFT = 4
+	$B_SHIFT2 = 32
+
+	return (($scoreFields -band $B_MASK) -shr $B_SHIFT) + (($scoreFields -band $B_MASK2) -shr $B_SHIFT2)
+}
+
+function Get-Charlies ($scoreFields)
+{
+	$C_MASK = 0x00000F00
+	$C_MASK2 = 0x00000F0000000000
+	$C_SHIFT = 8
+	$C_SHIFT2 = 36
+
+	return (($scoreFields -band $C_MASK) -shr $C_SHIFT) + (($scoreFields -band $C_MASK2) -shr $C_SHIFT2)
+}
+
+function Get-Deltas ($scoreFields)
+{
+	$D_MASK = 0x0000F000
+	$D_MASK2 = 0x0000F00000000000
+	$D_SHIFT = 12
+	$D_SHIFT2 = 40
+
+	return (($scoreFields -band $D_MASK) -shr $D_SHIFT) + (($scoreFields -band $D_MASK2) -shr $D_SHIFT2)
+}
+
+function Get-NoShoots ($scoreFields)
+{
+	$NS_MASK = 0x000F0000
+	$NS_MASK2 = 0x000F000000000000
+	$NS_SHIFT = 16
+	$NS_SHIFT2 = 44
+
+	return (($scoreFields -band $NS_MASK) -shr $NS_SHIFT) + (($scoreFields -band $NS_MASK2) -shr $NS_SHIFT2)
+}
+
+function Get-Mikes ($scoreFields)
+{
+	$M_MASK = 0x00F00000
+	$M_MASK2 = 0x00F0000000000000
+	$M_SHIFT = 20
+	$M_SHIFT2 = 48
+
+	return (($scoreFields -band $M_MASK) -shr $M_SHIFT) + (($scoreFields -band $M_MASK2) -shr $M_SHIFT2)
+}
+
+function Get-NoPenaltyMikes ($scoreFields)
+{
+	$NPM_MASK = 0x0F000000
+	$NPM_MASK2 = 0x0F00000000000000
+	$NPM_SHIFT = 24
+	$NPM_SHIFT2 = 52
+
+	return (($scoreFields -band $NPM_MASK) -shr $NPM_SHIFT) 	+ (($scoreFields -band $NPM_MASK2) -shr $NPM_SHIFT2)
+}
+
+function Get-ShooterScores ()
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		$shooterUUID,
+
+		[Parameter(Mandatory=$true)]
+		$matchInfo
+	)
+
+	#Write-Host "Shooter UUID $shooterUUID"
+	$shooterScores = $matchScoresJson.match_scores.stage_stagescores | Where-Object shtr -eq $shooterUUID
+	$pophTotal = 0
+	$popmTotal = 0
+	$popnpmTotal = 0
+	$popnsTotal = 0
+	$alphas = 0
+	$bravos = 0
+	$charlies = 0
+	$deltas = 0
+	$mikes = 0
+	$noShoots = 0
+	$npms = 0
+	$stageTime = 0.0
+
+	$i = 1
+	foreach ($shooterStageScore in $shooterScores)
+	{
+		#Write-Host $i
+		$i++
+		$poph = $shooterStageScore.poph
+		$popm = $shooterStageScore.popm
+		$popnpm = $shooterStageScore.popnpm
+		$popns = $shooterStageScore.popns
+
+		if ($shooterStageScore.ts)
+		{
+			foreach ($int in $shooterStageScore.ts)
+			{
+				$alphas += (Get-Alphas -scoreFields $int)
+				#Write-Host $alphas
+				$bravos += (Get-Bravos -scoreFields $int)
+				$charlies += (Get-Charlies -scoreFields $int)
+				$deltas += (Get-Deltas -scoreFields $int)
+				$noShoots += (Get-NoShoots -scoreFields $int)
+				$mikes += (Get-Mikes -scoreFields $int)
+				$npms += (Get-NoPenaltyMikes -scoreFields $int)
+			}
+		}
+
+		$alphas += $poph
+		#Write-Host "End alphas stage:" -NoNewLine
+		#Write-Host $alphas
+		$mikes += $popm
+		$npms += $popnpm
+		$noShoots += $popns
+
+		$pophTotal += $poph
+		$popmTotal += $popm
+		$popnpmTotal += $popnpm
+		$popnsTotal += $popns
+
+		foreach ($stringTime in $shooterStageScore.str)
+		{
+			$stageTime += $stringTime
+		}
+		if ($shooterUUID -eq "mmShooter_1987249") {Write-Host "Stage $i time: $($shooterStageScore.str[0])"}
+	}
+
+	#Write-Host "End alphas match:" -NoNewLine
+	#	Write-Host $alphas
+
+	$scores = [pscustomobject]@{
+		shooterUUID = $shooterUUID
+		A = $alphas
+		B = $bravos
+		C = $charlies
+		D = $deltas
+		M = $mikes
+		NS = $noShoots
+		NPM = $npms
+		TotalTime = $stageTime
+	}
+
+	#Write-Host "Before Return:" -NoNewLine
+	#Write-Host $scores.A
+
+	return $scores
 }
 
 function Get-OverallByDivisionPercent
@@ -155,13 +347,21 @@ function Get-OverallByDivisionPercent
 	
 	foreach ($shooter in $matchInfo.matchShooters)
 	{
-		$uspsaNumber = $shooter.sh_id.Replace("-","")
+		if ($null -ne $shooter.sh_id)
+		{
+			$uspsaNumber = $shooter.sh_id.Replace("-","")
+		}
+		else
+		{
+			$uspsaNumber = ""
+		}
 		$firstName = $shooter.sh_fn
 		$lastName = $shooter.sh_ln
 		$division = $shooter.sh_dvp
 		$class = $shooter.sh_grd
 		$shooterUUID = $shooter.sh_uuid
-		$divPercent = ($matchInfo.matchResults.match."$division" | Where shooter -eq $shooterUUID ).matchPercent
+		$divPercent = ($matchInfo.matchResults.match."$division" | Where-Object shooter -eq $shooterUUID ).matchPercent
+		$matchPoints = ($matchInfo.matchResults.match."$division" | Where-Object shooter -eq $shooterUUID ).matchPoints
 		
 		# Exceptions
 		# Force-fix any data issues in input
@@ -288,6 +488,8 @@ function Get-OverallByDivisionPercent
 			$sectionStatus = "Member"
 		}
 
+		$scores = Get-ShooterScores -shooterUUID $shooterUUID -matchInfo $matchInfo
+
 		$matchShooters += [pscustomobject]@{
 			USPSANumber = $uspsaNumber.ToUpper()
 			USPSANumberClean = $uspsaClean
@@ -299,9 +501,18 @@ function Get-OverallByDivisionPercent
 			Division = $division
 			Class = $class
 			DivisionPercent = [single]$divPercent
+			DivisionPoints = $matchPoints
 			SectionMember = $sectionMember
 			SectionStatus = $sectionStatus
-			}
+			A = $scores.A
+			B = $scores.B
+			C = $scores.C
+			D = $scores.D
+			M = $scores.M
+			NS = $scores.NS
+			NPM = $scores.NPM
+			TotalTime = $scores.TotalTime
+		}
 	}
 	
 	return $matchShooters
@@ -323,13 +534,25 @@ function Get-StandingsRaw
 		$excelPath
 	)
 
-	$matchDefJson = Get-MatchDef $sectionMatch.PractiScoreID
-	$matchResultsJson = Get-MatchResults $sectionMatch.PractiScoreID
-
+	if ($ForceDownload)
+	{	
+		Write-Host "ForceDownload option has been set. All match files will be downloaded from Practiscore."
+		$matchDefJson = Get-MatchFiles -matchID $sectionMatch.PractiScoreID -Name $matchDefJsonName -Force
+		$matchResultsJson = Get-MatchFiles -matchID $sectionMatch.PractiScoreID -Name $resultsJsonName -Force
+		$matchScoresJson = Get-MatchFiles -matchID $sectionMatch.PractiScoreID -Name $matchScoresJsonName -Force
+	}
+	else
+	{
+		Write-Host "ForceDownload option has NOT been set. Local match files will be used if available."
+		$matchDefJson = Get-MatchFiles -matchID $sectionMatch.PractiScoreID -Name $matchDefJsonName
+		$matchResultsJson = Get-MatchFiles -matchID $sectionMatch.PractiScoreID -Name $resultsJsonName
+		$matchScoresJson = Get-MatchFiles -matchID $sectionMatch.PractiScoreID -Name $matchScoresJsonName
+	}
 
 	$matchName = $matchDefJson.match_name
 	$matchShooters = $matchDefJson.match_shooters
 	$matchStages = $matchDefJson.match_stages
+	$matchScores = $matchScoresJson.match_scores
 
 	$matchInfo += [pscustomobject]@{
 				matchName = $matchName
@@ -338,6 +561,7 @@ function Get-StandingsRaw
 				matchShooters = $matchShooters
 				matchStages = $matchStages
 				matchResults = $matchResultsJson
+				matchScores = $matchScores
 				}
 	$matchOverallByDivision = Get-OverallByDivisionPercent -sectionShooters $sectionShooters -matchInfo $matchInfo
 	$matchOverallByDivision | Export-CSV "$($global:standingsDir)\$($sectionMatch.Club)-ovrbydiv.csv" -NoTypeInformation
@@ -360,7 +584,7 @@ function Build-MasterSheet
 		$standingsRaw
 	)
 	
-	$clubs = $standingsRaw | Select Club,ClubOrdered -Unique | Sort ClubOrdered
+	$clubs = $standingsRaw | Select-Object Club,ClubOrdered -Unique | Sort-Object ClubOrdered
 	
 	$sectionShooterResult = [pscustomobject]@{
 			USPSANumber = ""
@@ -381,6 +605,16 @@ function Build-MasterSheet
 	{
 		$sectionShooterResult | Add-Member -MemberType NoteProperty -Name $club.club -Value ""
 	}
+
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "MatchPoints" -Value 0.0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "TotalTime" -Value 0.0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "A" -Value 0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "B" -Value 0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "C" -Value 0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "D" -Value 0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "M" -Value 0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "NS" -Value 0
+	$sectionShooterResult | Add-Member -MemberType NoteProperty -Name "NPM" -Value 0
 	
 	return $sectionShooterResult
 }
@@ -403,22 +637,22 @@ function Process-Standings
 	
 	$standingsRaw | foreach-object {$_.DivisionPercent = [single]$_.DivisionPercent}
 	
-	$uspsaNumbers = ($standingsRaw | Where {($_.DivisionPercent -ne 0) -and ($_.USPSAnumber -ne "") -and ($_.USPSAnumber -ne "PEN")} | Select USPSAnumber -Unique | Sort).USPSANumber
+	$uspsaNumbers = ($standingsRaw | Where-Object {($_.DivisionPercent -ne 0) -and ($_.USPSAnumber -ne "") -and ($_.USPSAnumber -ne "PEN")} | Select-Object USPSAnumber -Unique | Sort-Object).USPSANumber
 	$shooterStandingObj = Build-MasterSheet -standingsRaw $standingsRaw
 	$finalStandings = @()
 
 	foreach ($uspsaNumber in $uspsaNumbers)
 	{
 		# This year shooters may have enough scores for multiple divisions. Make sure we separate out divisions.
-		$shooterDivs = ($standingsRaw | Where {($_.USPSANumber -eq $uspsaNumber) -and ($_.DivisionPercent -ne 0)} | Select Division -Unique).Division
+		$shooterDivs = ($standingsRaw | Where-Object {($_.USPSANumber -eq $uspsaNumber) -and ($_.DivisionPercent -ne 0)} | Select-Object Division -Unique).Division
 		
 		foreach ($division in $shooterDivs)
 		{
 			#Write-Host "Calculating average scores for shooter, $uspsaNumber"
 			$shooterStanding = $shooterStandingObj.PsObject.Copy()
-			$shooterResults = $standingsRaw | Where {($_.USPSANumber -eq $uspsaNumber) -and ($_.DivisionPercent -ne 0) -and $_.Division -eq $division} | Sort-Object ClubOrdered 
+			$shooterResults = $standingsRaw | Where-Object {($_.USPSANumber -eq $uspsaNumber) -and ($_.DivisionPercent -ne 0) -and $_.Division -eq $division} | Sort-Object ClubOrdered 
 			$bestOfResults = @()
-			$bestOfResults += $shooterResults | Sort DivisionPercent -Descending | Select -First $BestXOf
+			$bestOfResults += $shooterResults | Sort-Object DivisionPercent -Descending | Select-Object -First $BestXOf
 			
 			if ($bestOfResults.length -lt $BestXOf)
 			{
@@ -459,6 +693,15 @@ function Process-Standings
 			foreach ($shooterResult in $shooterResults)
 			{ 
 				$shooterStanding."$($shooterResult.Club)" = $shooterResult.DivisionPercent
+				$shooterStanding.A += $shooterResult.A
+				$shooterStanding.B += $shooterResult.B
+				$shooterStanding.C += $shooterResult.C
+				$shooterStanding.D += $shooterResult.D
+				$shooterStanding.M += $shooterResult.M
+				$shooterStanding.NS += $shooterResult.NS
+				$shooterStanding.NPM += $shooterResult.NPM
+				$shooterStanding.TotalTime += $shooterResult.TotalTime
+				$shooterStanding.MatchPoints += $shooterResult.DivisionPoints
 			}
 			
 			$shooterStanding.USPSANumber = $uspsaNumber.Replace("-","")
@@ -472,35 +715,6 @@ function Process-Standings
 				# Exception for known unclassified that now have classifications
 				# Check with actual USPSA classifier will be added later
 				$class = "U"
-				
-				if ($uspsaNumber -eq "TY45299")
-				{
-					$class = "B"
-				}
-				if ($uspsaNumber -eq "A72439")
-				{
-					$class = "C"
-				}
-				if ($uspsaNumber -eq "A94597")
-				{
-					$class = "B"
-				}
-				if ($uspsaNumber -eq "TY93603")
-				{
-					$class = "C"
-				}
-				if ($uspsaNumber -eq "TY97470")
-				{
-					$class = "C"
-				}
-				if ($uspsaNumber -eq "A97925")
-				{
-					$class = "D"
-				}
-				if ($uspsaNumber -eq "A101470")
-				{
-					$class = "C"
-				}
 				
 				$shooterStanding.Class = $class
 			}
@@ -522,7 +736,6 @@ function Process-Standings
 				$shooterStanding.SectionMember = $true
 				$shooterStanding.SectionStatus = "Member"
 			}#>
-			
 			
 			$finalStandings += $shooterStanding
 		}
@@ -554,14 +767,12 @@ function Calculate-OverallByDivisionPercent
 		Generate-Html -elementType "pStart" -htmlOutputPath $global:standingByDivisionHtmlOutputPath
 		
 		$shooters = @()
-		$shooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0)} | Sort SectionScore -Descending
-		if ($shooters -ne $null)
+		$shooters += $finalStandings | Where-Object {($_.Division -eq $division) -and ($_.SectionScore -gt 0)} | Sort-Object SectionScore -Descending
+		if ($null -ne $shooters)
 		{
 			$numEligibleShooters = $shooters.Length
 			#Write-Debug "$numEligibleShooters eligible shooters"
-			
-			
-			
+
 			$place = 1
 			foreach ($shooter in $shooters)
 			{
@@ -1280,6 +1491,43 @@ function Scrub-UspsaNumbers
 	}#>
 }
 
+function Get-LeaderBoardHtml ()
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		[PSCustomObject[]]$FinalStandings,
+
+		[Parameter(Mandatory=$true)]
+		[string]$PropertyName,
+
+		[Parameter(Mandatory=$true)]
+		[string]$FriendlyColumnName,
+
+		[Parameter(Mandatory=$false)]
+		[int]$Top = 10
+	)
+
+	$shooterList = $finalStandings | Sort-Object -Property $PropertyName -Descending | Select-Object -First $Top
+
+	$place = 1
+	$leaderBoardList = @()
+	foreach ($shooter in $shooterList)
+	{
+		$leaderBoardList += [pscustomobject]@{
+			Place = $place
+			"$FriendlyColumnName" = $shooter.$PropertyName
+			Name = $shooter.FirstName + " " + $shooter.LastName
+			Division = $shooter.Division
+		}
+		$place++
+	}
+
+	return ($leaderBoardList | ConvertTo-HTML -Fragment)
+}
+
+
 
 $date = (get-date -f yyyyMMdd-hhmmss)
 $global:scriptName = "Update-NWSectionResults"
@@ -1298,6 +1546,9 @@ $global:awardsHtmlOutputPath = "$($global:standingsDir)\awardsHtml-$($date).html
 $global:cssPath = "$($global:outputDir)\nwsectionresults.css"
 $global:style = Get-Content $global:cssPath
 $global:currentUspsanumber = @{}
+$global:matchScoresJsonName = "match_scores"
+$global:resultsJsonName = "results"
+$global:matchDefJsonName = "match_def"
 
 
 
@@ -1358,6 +1609,9 @@ $standingByDivisionHtmlPath = "$($htmlLocalRepoDir)\$season\standingByDivision.h
 $standingByClassHtmlPath = "$($htmlLocalRepoDir)\$season\standingByClass.html"
 $finalStandingsRawHtmlSourcePath = "$($htmlLocalRepoDir)\finalstandingsraw-source.html"
 $finalStandingsRawHtmlNewPath = "$($htmlLocalRepoDir)\$season\finalstandingsraw.html"
+$leaderboardHtmlSourcePath = "$($htmlLocalRepoDir)\leaderboard.html"
+$leaderboardHtmlNewPath = "$($htmlLocalRepoDir)\$season\leaderboard.html"
+$global:seasonPath = "$($htmlLocalRepoDir)\$season"
 
 if ($FinalCalc)
 {
@@ -1483,6 +1737,17 @@ $newFinalHtml = $newFinalHtml -replace "\[finalStandingsRaw\]", $finalStandingsH
 $newFinalHtml = $newFinalHtml -replace "\[season\]", $season
 $newFinalHtml | Out-File $finalStandingsRawHtmlNewPath
 
+Write-Host "Writing Leader Boards"
+$newLeaderHtml = Get-Content $leaderboardHtmlSourcePath
+$hoaHtml = Get-LeaderBoardHtml -FinalStandings $finalStandings -PropertyName "MatchPoints" -FriendlyColumnName "Total Match Points"
+$mostAccurateHtml = Get-LeaderBoardHtml -FinalStandings $finalStandings -PropertyName "A" -FriendlyColumnName "Total Alphas"
+$noshootHtml = Get-LeaderBoardHtml -FinalStandings $finalStandings -PropertyName "NS" -FriendlyColumnName "Total No Shoots"
+$deltaHtml = Get-LeaderBoardHtml -FinalStandings $finalStandings -PropertyName "D" -FriendlyColumnName "Total Deltas"
+$newLeaderHtml = $newLeaderHtml -replace "\[hoa\]", $hoaHtml
+$newLeaderHtml = $newLeaderHtml -replace "\[mostaccurate\]", $mostAccurateHtml
+$newLeaderHtml = $newLeaderHtml -replace "\[ns\]", $noshootHtml
+$newLeaderHtml = $newLeaderHtml -replace "\[deltas\]", $deltaHtml
+$newLeaderHtml | Out-File $leaderboardHtmlNewPath
 
 Write-Host "Copying other web files to repo"
 Copy-Item -Path $global:standingByDivisionHtmlOutputPath -Destination $standingByDivisionHtmlPath

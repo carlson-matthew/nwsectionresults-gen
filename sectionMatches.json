@@ -208,8 +208,18 @@
 				"InputType": "PractiScore",
 				"PractiscoreID": "fdb5d794-6f35-4089-a74b-5804ad4485e8",
 				"PractiScoreURL": "https://practiscore.com/results/new/78458",
-				"MatchDate": "4/6/2018",
-				"UspsaURL": "",
+				"MatchDate": "4/6/2019",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=30874",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 2,
+				"Club": "Port Townsend",
+				"InputType": "PractiScore",
+				"PractiscoreID": "22c2b480-b76a-4918-aef3-554a5fc49e39",
+				"PractiScoreURL": "https://practiscore.com/results/new/82934",
+				"MatchDate": "5/31/2019",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=31658",
 				"Championship": "FALSE"
 			}
 		]
