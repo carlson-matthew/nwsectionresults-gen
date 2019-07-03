@@ -221,6 +221,16 @@
 				"MatchDate": "5/31/2019",
 				"UspsaURL": "https://uspsa.org/match-results-details?index=31658",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 3,
+				"Club": "Mt. Rainer's Shadow",
+				"InputType": "PractiScore",
+				"PractiscoreID": "1d00e4b3-7f21-4bcf-a3f1-82772001fda8",
+				"PractiScoreURL": "https://practiscore.com/results/new/85789",
+				"MatchDate": "7/2/2019",
+				"UspsaURL": "",
+				"Championship": "FALSE"
 			}
 		]
 	}

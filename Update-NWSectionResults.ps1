@@ -307,7 +307,7 @@ function Get-ShooterScores ()
 		{
 			$stageTime += $stringTime
 		}
-		if ($shooterUUID -eq "mmShooter_1987249") {Write-Host "Stage $i time: $($shooterStageScore.str[0])"}
+		#if ($shooterUUID -eq "mmShooter_1987249") {Write-Host "Stage $i time: $($shooterStageScore.str[0])"}
 	}
 
 	#Write-Host "End alphas match:" -NoNewLine
@@ -329,6 +329,35 @@ function Get-ShooterScores ()
 	#Write-Host $scores.A
 
 	return $scores
+}
+
+function Clean-Division
+{
+	[CmdletBinding()]
+	Param
+	(
+		[Parameter(Mandatory=$true)]
+		[string]$Division
+	)
+
+	$divisionLower = $Division.ToLower()
+
+	foreach ($masterDivision in $global:divisions)
+	{
+		if ($masterDivision.ToLower() -eq $divisionLower)
+		{
+			return $masterDivision
+		}
+	}
+
+	# Account for abbreviations and one-offs
+
+	switch ($Division)
+	{
+		"CO" { return "Carry Optics"}
+	}
+
+	return "DivisionNotFound"
 }
 
 function Get-OverallByDivisionPercent
@@ -357,11 +386,12 @@ function Get-OverallByDivisionPercent
 		}
 		$firstName = $shooter.sh_fn
 		$lastName = $shooter.sh_ln
-		$division = $shooter.sh_dvp
+		$rawDivision = $shooter.sh_dvp	# The division as recorded in the match file
+		$division = Clean-Division -Division $shooter.sh_dvp # The sanitized version of the division
 		$class = $shooter.sh_grd
 		$shooterUUID = $shooter.sh_uuid
-		$divPercent = ($matchInfo.matchResults.match."$division" | Where-Object shooter -eq $shooterUUID ).matchPercent
-		$matchPoints = ($matchInfo.matchResults.match."$division" | Where-Object shooter -eq $shooterUUID ).matchPoints
+		$divPercent = ($matchInfo.matchResults.match."$rawDivision" | Where-Object shooter -eq $shooterUUID ).matchPercent
+		$matchPoints = ($matchInfo.matchResults.match."$rawDivision" | Where-Object shooter -eq $shooterUUID ).matchPoints
 		
 		# Exceptions
 		# Force-fix any data issues in input
@@ -369,11 +399,6 @@ function Get-OverallByDivisionPercent
 		# - Shooter changes to lifetime or three year membership midseason (might have another fix to this by dropping prefix
 		# - Typos in name or USPSA number
 		# - Discrepencies between division or class names
-		
-		if ($division -eq "CO")
-		{
-			$division = "Carry Optics"
-		}
 		
 		if ($uspsaNumber -eq "101809")
 		{
@@ -638,6 +663,8 @@ function Process-Standings
 	$standingsRaw | foreach-object {$_.DivisionPercent = [single]$_.DivisionPercent}
 	
 	$uspsaNumbers = ($standingsRaw | Where-Object {($_.DivisionPercent -ne 0) -and ($_.USPSAnumber -ne "") -and ($_.USPSAnumber -ne "PEN")} | Select-Object USPSAnumber -Unique | Sort-Object).USPSANumber
+	
+	# Create the object that stores all match results, averages and running totals for Alphas, Mikes, etc. This is what handles dynamically adding club specific scores.
 	$shooterStandingObj = Build-MasterSheet -standingsRaw $standingsRaw
 	$finalStandings = @()
 
@@ -661,14 +688,6 @@ function Process-Standings
 				$averageObj = $shooterResults.DivisionPercent | Measure-Object -Average
 				[single]$currentAverage = [single]([math]::Round($averageObj.Average,2))
 				$shooterStanding.CurrentAverage = $currentAverage
-				
-				if ($uspsaNumber -eq  "A85001")
-				{
-					$shooterResults.DivisionPercent | Out-File C:\temp\a85001.txt -Append
-					$averageObj | Out-File C:\temp\a85001.txt -Append
-					$currentAverage  | Out-File C:\temp\a85001.txt -Append
-					Write-Host "Done!" -foregroundcolor red
-				}
 			}
 			else
 			{
