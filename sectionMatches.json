@@ -229,8 +229,28 @@
 				"PractiscoreID": "1d00e4b3-7f21-4bcf-a3f1-82772001fda8",
 				"PractiScoreURL": "https://practiscore.com/results/new/85789",
 				"MatchDate": "7/2/2019",
-				"UspsaURL": "",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=32092",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 4,
+				"Club": "Paul Bunyan - 1",
+				"InputType": "PractiScore",
+				"PractiscoreID": "bf1b3aed-7846-485e-92fd-3f40b4883c82",
+				"PractiScoreURL": "https://practiscore.com/results/new/86516",
+				"MatchDate": "7/14/2019",
+				"UspsaURL": "",
+				"Championship": "TRUE"
+			},
+			{
+				"MatchNumber": 5,
+				"Club": "Paul Bunyan - 2",
+				"InputType": "PractiScore",
+				"PractiscoreID": "bf1b3aed-7846-485e-92fd-3f40b4883c82",
+				"PractiScoreURL": "https://practiscore.com/results/new/86516",
+				"MatchDate": "7/14/2019",
+				"UspsaURL": "",
+				"Championship": "TRUE"
 			}
 		]
 	}
