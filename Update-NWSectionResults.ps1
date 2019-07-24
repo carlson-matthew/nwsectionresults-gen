@@ -400,94 +400,14 @@ function Get-OverallByDivisionPercent
 		# - Typos in name or USPSA number
 		# - Discrepencies between division or class names
 		
-		if ($uspsaNumber -eq "101809")
-		{
-			$uspsaNumber = "A101809"
-		}
-		
 		if ($uspsaNumber.ToUpper().Contains("PEN"))
 		{
 			$uspsaNumber = "PEN"
 		}
 		
-		if ($lastName -eq "Hong" -and $firstName -eq "Andrew")
-		{
-			$uspsaNumber = "A83199"
-		}
-		
-		if ($lastName -eq "LeRoux #1" -and $firstName -eq "Scott")
-		{
-			$uspsaNumber = "L3253"
-		}
-		
-		if ($lastName -eq "Niemann" -and $firstName -eq "Kamryn")
-		{
-			$uspsaNumber = "A101879"
-		}
-		
 		if ($class -eq "GM")
 		{
 			$class = "G"
-		}
-		
-		if ($uspsaNumber -eq "L2124" -and $division -eq "Limited 10")
-		{
-			$class = "B"
-		}
-		
-		if ($lastName -eq "Fenlin" -and $firstName -eq "Jim")
-		{
-			$uspsaNumber = "TY77726"
-		}
-		
-		if ($lastName -eq "Cook" -and $firstName -eq "Jason")
-		{
-			$uspsaNumber = "A85741"
-		}
-		
-		if ($lastName -eq "Paolini" -and $firstName -eq "Austin")
-		{
-			$uspsaNumber = "A85741"
-		}
-		
-		if ($lastName -eq "Domingo" -and $firstName -eq "Emilio")
-		{
-			$uspsaNumber = "TY86951"
-		}
-		
-		if ($lastName -eq "Doster" -and $firstName -eq "Stephanie")
-		{
-			$uspsaNumber = "A96362"
-		}
-		
-		if ($lastName -eq "Skubi" -and $firstName -eq "Bart")
-		{
-			$uspsaNumber = "L4061"
-		}
-		
-		if ($lastName -eq "Tomasie" -and $firstName -eq "Squire")
-		{
-			$uspsaNumber = "L1145"
-		}
-		
-		if ($lastName -eq "Blair" -and $firstName -eq "Bruce")
-		{
-			$uspsaNumber = "A47451"
-		}
-		
-		if ($lastName -eq "Dong" -and $firstName -eq "James")
-		{
-			$uspsaNumber = "FY22573"
-		}
-
-		if ($lastName -eq "Novasky" -and $firstName -eq "Tim")
-		{
-			$uspsaNumber = "A100482"
-		}
-
-		if ($lastName -eq "Pukalo" -and $firstName -eq "Chris")
-		{
-			$uspsaNumber = "A89231"
 		}
 		
 		#$uspsaNumber = Get-ActualMemberNumber -UspsaNumber $uspsaNumber
@@ -505,9 +425,9 @@ function Get-OverallByDivisionPercent
 			{$_.StartsWith("TY")} { $uspsaNumberClean = $uspsaNumber.Substring(2) }
 		}
 		#Write-Host "Uspsa number clean: " $uspsaNumberClean
-		#if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-","").Replace("A","").Replace("F","").Replace("TY",""))
+		#if ($uspsaNumber -in $sectionShooters."USPSA ID".Replace("-","").Replace("A","").Replace("F","").Replace("TY",""))
 		$uspsaClean = $uspsaNumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY","")
-		if ($uspsaClean -in $sectionShooters.USPSANumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY",""))
+		if ($uspsaClean -in $sectionShooters."USPSA ID".ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY",""))
 		{
 			$sectionMember = $true
 			$sectionStatus = "Member"
@@ -807,12 +727,12 @@ function Process-Standings
 			# Check to see if the shooter is in the section. Remove '-' to standardize.
 			# TODO: Sanitize USPSA number to ignore membershp type prefix. Number seem to never change between TY, A, F, etc. Could use this as a truly unique value.
 			$uspsaClean = $uspsaNumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY","")
-			if ($uspsaClean -in $sectionShooters.USPSANumber.ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY",""))
+			if ($uspsaClean -in $sectionShooters."USPSA ID".ToUpper().Replace("-","").Replace("A","").Replace("TY","").Replace("L","").Replace("B","").Replace("FY",""))
 			{
 				$shooterStanding.SectionMember = $true
 				$shooterStanding.SectionStatus = "Member"
 			}
-			<#if ($uspsaNumber -in $sectionShooters.USPSANumber.Replace("-",""))
+			<#if ($uspsaNumber -in $sectionShooters."USPSA ID".Replace("-",""))
 			{
 				$shooterStanding.SectionMember = $true
 				$shooterStanding.SectionStatus = "Member"
@@ -1042,9 +962,9 @@ function Calculate-SectionStats
 		$sectionShooterResult = [pscustomobject]@{
 			Division = $division
 			Class = "Overall"
-			TotalUniqueShooters = @($rawStandings | Where {($_.Division -eq $division) -and ($_.USPSANumber -ne "") -and ($_.USPSANumber -ne "PEN")} | Select USPSANumber -Unique).Count
-			TotalEligibleShooters = @($finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0)}).Count
-			TotalEligibleSectionShooters = @($finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.SectionMember)}).Count
+			TotalUniqueShooters = @($rawStandings | Where-Object {($_.Division -eq $division) -and ($_.USPSANumber -ne "") -and ($_.USPSANumber -ne "PEN")} | Select-Object USPSANumber -Unique).Count
+			TotalEligibleShooters = @($finalStandings | Where-Object {($_.Division -eq $division) -and ($_.SectionScore -gt 0)}).Count
+			TotalEligibleSectionShooters = @($finalStandings | Where-Object {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.SectionMember)}).Count
 		}
 		$sectionStats += $sectionShooterResult
 		
@@ -1054,15 +974,15 @@ function Calculate-SectionStats
 			#Write-Debug $fullName
 			
 			$uniqueShooters = @()
-			$uniqueShooters += $rawStandings | Where {($_.Division -eq $division) -and ($_.USPSANumber -ne "") -and ($_.USPSANumber -ne "PEN") -and ($_.Class -eq $class)} | Select USPSANumber -Unique
+			$uniqueShooters += $rawStandings | Where-Object {($_.Division -eq $division) -and ($_.USPSANumber -ne "") -and ($_.USPSANumber -ne "PEN") -and ($_.Class -eq $class)} | Select-Object USPSANumber -Unique
 			$numUniqueShooters = $uniqueShooters.Count
 			
 			$eligibleShooters = @()
-			$eligibleShooters += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.Class -eq $class)} | Sort SectionScore -Descending
+			$eligibleShooters += $finalStandings | Where-Object {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.Class -eq $class)} | Sort-Object SectionScore -Descending
 			$numEligibleShooters = $eligibleShooters.Length
 			
 			$eligibleShootersSection = @()
-			$eligibleShootersSection += $finalStandings | Where {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.Class -eq $class) -and ($_.SectionMember)} | Sort SectionScore -Descending
+			$eligibleShootersSection += $finalStandings | Where-Object {($_.Division -eq $division) -and ($_.SectionScore -gt 0) -and ($_.Class -eq $class) -and ($_.SectionMember)} | Sort-Object SectionScore -Descending
 			$numEligibleShootersSection = $eligibleShootersSection.Length
 			
 			$sectionShooterResult = [pscustomobject]@{
@@ -1687,7 +1607,7 @@ function Get-LeaderBoardHtml ()
 		[int]$Top = 10
 	)
 
-	$shooterList = $finalStandings | Sort-Object -Property $PropertyName -Descending | Select-Object -First $Top
+	$shooterList = $finalStandings | Where-Object SectionMember -eq $true | Sort-Object -Property $PropertyName -Descending | Select-Object -First $Top
 
 	$place = 1
 	$leaderBoardList = @()
@@ -1847,7 +1767,7 @@ foreach ($sectionMatch in $sectionMatchesConfigJson.$Season.Matches)
 			$sectionStatus = "Non-Member"
 			# Check to see if the shooter is in the section. Remove '-' to standardize.
 			# TODO: Sanitize USPSA number to ignore membershp type prefix. Number seem to never change between TY, A, F, etc. Could use this as a truly unique value.
-			if ($shooter.USPSANumber -in $sectionShooters.USPSANumber.Replace("-",""))
+			if ($shooter.USPSANumber -in $sectionShooters."USPSA ID".Replace("-",""))
 			{
 				$sectionMember = $true
 				$sectionStatus = "Member"
