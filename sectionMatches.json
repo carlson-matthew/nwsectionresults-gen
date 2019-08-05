@@ -239,7 +239,7 @@
 				"PractiscoreID": "bf1b3aed-7846-485e-92fd-3f40b4883c82",
 				"PractiScoreURL": "https://practiscore.com/results/new/86516",
 				"MatchDate": "7/14/2019",
-				"UspsaURL": "",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=32436",
 				"Championship": "TRUE"
 			},
 			{
@@ -249,7 +249,7 @@
 				"PractiscoreID": "bf1b3aed-7846-485e-92fd-3f40b4883c82",
 				"PractiScoreURL": "https://practiscore.com/results/new/86516",
 				"MatchDate": "7/14/2019",
-				"UspsaURL": "",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=32436",
 				"Championship": "TRUE"
 			},
 			{
@@ -260,6 +260,16 @@
 				"PractiScoreURL": "https://practiscore.com/results/new/87344",
 				"MatchDate": "7/21/2019",
 				"UspsaURL": "https://uspsa.org/match-results-details?index=32400",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 7,
+				"Club": "Custer",
+				"InputType": "PractiScore",
+				"PractiscoreID": "0ceaa223-72f2-4fe2-b27c-838b7cdfcf7f",
+				"PractiScoreURL": "https://practiscore.com/results/new/88815",
+				"MatchDate": "8/4/2019",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=32629",
 				"Championship": "FALSE"
 			}
 		]

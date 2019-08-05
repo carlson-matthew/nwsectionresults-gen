@@ -1607,7 +1607,7 @@ function Get-LeaderBoardHtml ()
 		[int]$Top = 10
 	)
 
-	$shooterList = $finalStandings | Where-Object SectionMember -eq $true | Sort-Object -Property $PropertyName -Descending | Select-Object -First $Top
+	$shooterList = $finalStandings | Where-Object SectionMember -eq $true | Sort-Object -Property $PropertyName -Descending
 
 	$place = 1
 	$leaderBoardList = @()
@@ -1622,7 +1622,8 @@ function Get-LeaderBoardHtml ()
 		$place++
 	}
 
-	return ($leaderBoardList | ConvertTo-HTML -Fragment)
+	$leaderBoard = Create-HtmlTable -Objects $leaderBoardList
+	return $leaderBoard
 }
 
 
