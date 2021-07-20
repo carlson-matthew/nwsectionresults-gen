@@ -273,5 +273,40 @@
 				"Championship": "FALSE"
 			}
 		]
+	},
+	"2021": {
+		"Championship": false,
+		"Matches": [
+			{
+				"MatchNumber": 1,
+				"Club": "Paul Bunyan",
+				"InputType": "PractiScore",
+				"PractiscoreID": "6de463d4-6e2f-40d0-b431-d6098582d902",
+				"PractiScoreURL": "https://practiscore.com/results/new/134973",
+				"MatchDate": "5/9/2021",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=41138",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 2,
+				"Club": "Port Townsend",
+				"InputType": "PractiScore",
+				"PractiscoreID": "beca17ee-d4bd-42b1-ba05-5abcab316bf6",
+				"PractiScoreURL": "https://practiscore.com/results/new/beca17ee-d4bd-42b1-ba05-5abcab316bf6",
+				"MatchDate": "6/5/2021",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=41572",
+				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 3,
+				"Club": "Mt. Rainer's Shadow",
+				"InputType": "PractiScore",
+				"PractiscoreID": "eab3c311-f250-4335-9655-2a831502f465",
+				"PractiScoreURL": "https://practiscore.com/results/new/eab3c311-f250-4335-9655-2a831502f465",
+				"MatchDate": "6/16/2021",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=41791",
+				"Championship": "FALSE"
+			}
+		]
 	}
 }

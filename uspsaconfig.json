@@ -1,5 +1,5 @@
 {
-	"Season": "2019",
+	"Season": "2021",
 	"Divisions": [
 		"Carry Optics",
 		"Limited",
@@ -21,7 +21,7 @@
 	],
 	"Eligibility": {
 		"BestXOf": 4,
-		"BestXOfNoChallenge": 3
+		"BestXOfNoChallenge": 4
 	},
 	"AwardParameters":	{
 		"OverallPlaceLimit": 3,

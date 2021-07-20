@@ -51,11 +51,11 @@ function getHTML ($uri, $timeoutNum=5, $postParams) {
 		try {
 			if ($postParams)
 			{
-				$html = Invoke-WebRequest -Uri $uri -Method POST -Body $postParams
+				$html = Invoke-WebRequest -Uri $uri -Method POST -Body $postParams -UseBasicParsing
 			}
 			else
 			{
-				$html = Invoke-WebRequest -Uri $uri
+				$html = Invoke-WebRequest -Uri $uri -UseBasicParsing
 			}
 			$success = $true
 		}
@@ -1697,7 +1697,7 @@ else
 Write-Host "Using best " $global:bestXOf " of n scores."
 
 # Public HTML URLs
-$htmlLocalRepoDir = "C:\Repos\Github\nwsectionresults"
+$htmlLocalRepoDir = "H:\repos\nwsectionresults"
 Create-Folder -folderPath "$($htmlLocalRepoDir)\$season"
 
 $indexHtmlNewPath = "$($htmlLocalRepoDir)\$season\index.html"
