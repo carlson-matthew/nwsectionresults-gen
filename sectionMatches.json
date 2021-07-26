@@ -306,6 +306,15 @@
 				"MatchDate": "6/16/2021",
 				"UspsaURL": "https://uspsa.org/match-results-details?index=41791",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 4,
+				"Club": "Renton",
+				"InputType": "PractiScore",
+				"PractiscoreID": "6ff4b3c2-4eb4-4e3f-ae5e-1be1929be399",
+				"PractiScoreURL": "https://practiscore.com/results/new/142532",
+				"MatchDate": "7/25/2021",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=42537"
 			}
 		]
 	}
