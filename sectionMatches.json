@@ -275,7 +275,7 @@
 		]
 	},
 	"2021": {
-		"Championship": false,
+		"Championship": true,
 		"Matches": [
 			{
 				"MatchNumber": 1,
@@ -319,13 +319,34 @@
 			},
 			{
 				"MatchNumber": 5,
-				"Club": "Area 1",
+				"Club": "Area 1 - 1",
 				"InputType": "PractiScore",
 				"PractiscoreID": "4034fc94-faed-4561-9f62-73e87b0a0228",
 				"PractiScoreURL": "https://practiscore.com/results/new/4034fc94-faed-4561-9f62-73e87b0a0228",
 				"MatchDate": "8/4/2021",
 				"UspsaURL": "https://uspsa.org/match-results-details?index=42939",
-				"Championship": "FALSE",
+				"Championship": "TRUE",
+				"OptInList": [
+					"A85321",
+					"TY37515",
+					"A76637",
+					"Fu23884",
+					"L4681",
+					"TY93603",
+					"A51227",
+					"FY89148",
+					"A-42954"
+				]
+			},
+			{
+				"MatchNumber": 6,
+				"Club": "Area 1 - 2",
+				"InputType": "PractiScore",
+				"PractiscoreID": "4034fc94-faed-4561-9f62-73e87b0a0228",
+				"PractiScoreURL": "https://practiscore.com/results/new/4034fc94-faed-4561-9f62-73e87b0a0228",
+				"MatchDate": "8/4/2021",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=42939",
+				"Championship": "TRUE",
 				"OptInList": [
 					"A85321",
 					"TY37515",
