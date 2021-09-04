@@ -409,6 +409,21 @@ function Get-OverallByDivisionPercent
 		{
 			$class = "G"
 		}
+
+		if ($uspsaNumber -eq "Fu23884")
+		{
+			$uspsaNumber = "FY23884"
+		}
+
+		if ($uspsaNumber -eq "TY63903")
+		{
+			$uspsaNumber = "TY93603"
+		}
+
+		if ($uspsaNumber -eq "A-42954")
+		{
+			$uspsaNumber = "A42954"
+		}
 		
 		#$uspsaNumber = Get-ActualMemberNumber -UspsaNumber $uspsaNumber
 		
@@ -479,6 +494,8 @@ function Get-StandingsRaw
 		$excelPath
 	)
 
+	$optInMatch = $false
+
 	if ($ForceDownload)
 	{	
 		Write-Host "ForceDownload option has been set. All match files will be downloaded from Practiscore."
@@ -494,10 +511,25 @@ function Get-StandingsRaw
 		$matchScoresJson = Get-MatchFiles -matchID $sectionMatch.PractiScoreID -Name $matchScoresJsonName
 	}
 
+	if ($sectionMatch.OptInList.Length -gt 0)
+	{
+		Write-Host "This match is optional. The following shooters have opted in:"
+		Write-Host ($sectionMatch.OptInList -join ", ")
+		$optInMatch = $true
+	}
+
 	$matchName = $matchDefJson.match_name
-	$matchShooters = $matchDefJson.match_shooters
 	$matchStages = $matchDefJson.match_stages
 	$matchScores = $matchScoresJson.match_scores
+
+	if ($optInMatch)
+	{
+		$matchShooters = $matchDefJson.match_shooters | where sh_id -in $sectionMatch.OptInList
+	}
+	else
+	{
+		$matchShooters = $matchDefJson.match_shooters
+	}
 
 	$matchInfo += [pscustomobject]@{
 				matchName = $matchName
