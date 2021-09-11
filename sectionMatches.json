@@ -358,6 +358,16 @@
 					"FY89148",
 					"A-42954"
 				]
+			},
+			{
+				"MatchNumber": 7,
+				"Club": "Custer",
+				"InputType": "PractiScore",
+				"PractiscoreID": "d885726d-c05c-4e5f-8c4d-84f688ed591b",
+				"PractiScoreURL": "https://practiscore.com/results/new/d885726d-c05c-4e5f-8c4d-84f688ed591b",
+				"MatchDate": "9/5/2021",
+				"UspsaURL": "https://uspsa.org/match-results-details?index=43274",
+				"Championship": "FALSE"
 			}
 		]
 	}
