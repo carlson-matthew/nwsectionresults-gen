@@ -368,6 +368,16 @@
 				"MatchDate": "9/5/2021",
 				"UspsaURL": "https://uspsa.org/match-results-details?index=43274",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 8,
+				"Club": "Marysville",
+				"InputType": "PractiScore",
+				"PractiscoreID": "11e4fe9f-d01f-4b38-ae51-18a819bcb704",
+				"PractiScoreURL": "https://practiscore.com/results/new/150568",
+				"MatchDate": "10/17/2021",
+				"UspsaURL": "",
+				"Championship": "FALSE"
 			}
 		]
 	}
