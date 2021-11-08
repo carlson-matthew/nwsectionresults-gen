@@ -378,6 +378,16 @@
 				"MatchDate": "10/17/2021",
 				"UspsaURL": "",
 				"Championship": "FALSE"
+			},
+			{
+				"MatchNumber": 9,
+				"Club": "Shelton",
+				"InputType": "PractiScore",
+				"PractiscoreID": "3818557b-79f3-4a43-afe1-1f657b96866b",
+				"PractiScoreURL": "https://practiscore.com/results/new/3818557b-79f3-4a43-afe1-1f657b96866b",
+				"MatchDate": "11/7/2021",
+				"UspsaURL": "",
+				"Championship": "FALSE"
 			}
 		]
 	}
